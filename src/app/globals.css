@@ -40,3 +40,32 @@ a {
     color-scheme: dark;
   }
 }
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Prevent layout shifts */
+.MuiCollapse-root {
+  will-change: height;
+}
+
+.MuiAccordion-root {
+  will-change: height;
+}
+
+.MuiSelect-select {
+  will-change: auto;
+}
+
+/* Smooth transitions for dynamic content */
+.MuiBox-root,
+.MuiContainer-root {
+  will-change: auto;
+}
+
+/* Prevent menu from causing layout shifts */
+.MuiPopper-root {
+  z-index: 1300 !important;
+}
