@@ -109,7 +109,11 @@ import {
   Badge as BadgeIcon,
   Business as BusinessIcon,
   Article as ArticleIcon,
-  Dashboard as DashboardIcon
+  Dashboard as DashboardIcon,
+  CloudUpload as CloudUploadIcon,
+  Email as EmailIcon,
+  Schedule as ScheduleIcon,
+  MoreHoriz as MoreHorizIcon
 } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
 import { useAuth } from '../../../../components/AuthProvider';
@@ -239,6 +243,14 @@ export default function CollaborativeWriting() {
   const [teamManagementOpen, setTeamManagementOpen] = useState(false);
   const [selectedManuscript, setSelectedManuscript] = useState(null);
   
+  // Team management states
+  const [teamData, setTeamData] = useState({ collaborators: [], pendingInvitations: [] });
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [addCollaboratorOpen, setAddCollaboratorOpen] = useState(false);
+  const [editingCollaborator, setEditingCollaborator] = useState(null);
+  const [collaboratorMenuAnchor, setCollaboratorMenuAnchor] = useState(null);
+  const [selectedCollaboratorForMenu, setSelectedCollaboratorForMenu] = useState(null);
+  
   // Menu states
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuManuscript, setMenuManuscript] = useState(null);
@@ -310,6 +322,8 @@ export default function CollaborativeWriting() {
   const [proposalActiveStep, setProposalActiveStep] = useState(0);
   const [proposalFormError, setProposalFormError] = useState(null);
   const [isSubmittingProposal, setIsSubmittingProposal] = useState(false);
+  const [currentProposalId, setCurrentProposalId] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState('blank');
 
   // Proposal collaborator search state
   const [proposalOrcidInput, setProposalOrcidInput] = useState('');
@@ -328,7 +342,7 @@ export default function CollaborativeWriting() {
     email: ''
   });
 
-  const proposalSteps = ['Proposal Details', 'Invite Collaborators'];
+  const proposalSteps = ['Proposal Details', 'Select Template', 'Invite Collaborators'];
 
   // New proposal state
   const [newProposal, setNewProposal] = useState({
@@ -336,8 +350,8 @@ export default function CollaborativeWriting() {
     type: 'Research Proposal',
     fields: [], // Changed from field to fields array
     otherFields: '', // For custom fields when "Other" is selected
-    creator: '', // Changed from principalInvestigator
-    creatorOrcid: '', // Changed from principalInvestigatorOrcid
+    creator: user?.givenName + ' ' + user?.familyName || '', // Changed from principalInvestigator
+    creatorOrcid: user?.orcidId || '', // Changed from principalInvestigatorOrcid
     collaborators: [],
     sections: [
       { id: 'section-0-executive-summary', title: 'Executive Summary', description: 'Brief overview of the proposal', order: 0 },
@@ -488,6 +502,13 @@ export default function CollaborativeWriting() {
           };
           setCreator(creatorInfo);
           setNewManuscript(prev => ({ ...prev, creator: creatorInfo }));
+          
+          // Update proposal creator as well
+          setNewProposal(prev => ({
+            ...prev,
+            creator: userData.givenName + ' ' + userData.familyName || userData.name || 'Unknown User',
+            creatorOrcid: userData.orcidId || userData.orcid || ''
+          }));
         }
       } catch (error) {
         console.error('Error loading creator info:', error);
@@ -620,6 +641,135 @@ export default function CollaborativeWriting() {
     showSnackbar('Manuscript setup complete!', 'success');
   };
 
+  // Proposal creation functions
+  const handleCreateProposalStep1 = async () => {
+    if (!newProposal.title || newProposal.fields.length === 0) {
+      setProposalFormError('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setIsSubmittingProposal(true);
+      setProposalFormError(null);
+
+      const proposalData = {
+        title: newProposal.title,
+        type: 'Proposal',
+        field: newProposal.fields.join(', '), // Convert array to comma-separated string
+        description: newProposal.description || null
+      };
+
+      const response = await fetch('/api/manuscripts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(proposalData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Store the proposal ID for next steps
+        setCurrentProposalId(result.data.manuscript.id);
+        
+        // Move to next step
+        setProposalActiveStep(1);
+        
+        showSnackbar('Proposal created successfully!', 'success');
+      } else {
+        throw new Error(result.error || 'Failed to create proposal');
+      }
+    } catch (error) {
+      console.error('Failed to create proposal:', error);
+      setProposalFormError(error.message || 'An error occurred while creating the proposal');
+    } finally {
+      setIsSubmittingProposal(false);
+    }
+  };
+
+  const handleProposalNextStep = () => {
+    if (proposalActiveStep === 1) {
+      // Template selection step - move to collaborators
+      setProposalActiveStep(2);
+    }
+  };
+
+  const handleFinishProposal = async () => {
+    try {
+      // If there are collaborators to invite, send invitations
+      if (newProposal.collaborators.length > 0) {
+        for (const collaborator of newProposal.collaborators) {
+          if (collaborator.status === 'PENDING' && !collaborator.invitationId) {
+            await fetch('/api/manuscripts/invitations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                manuscriptId: currentProposalId,
+                orcidId: collaborator.orcidId,
+                email: collaborator.email,
+                givenName: collaborator.givenName,
+                familyName: collaborator.familyName,
+                affiliation: collaborator.affiliation,
+                role: collaborator.role || 'CONTRIBUTOR',
+                message: ''
+              }),
+            });
+          }
+        }
+      }
+      
+      // Reset form and close modal
+      setNewProposal({
+        title: '',
+        type: 'Research Proposal',
+        fields: [],
+        otherFields: '',
+        creator: user?.givenName + ' ' + user?.familyName || '',
+        creatorOrcid: user?.orcidId || '',
+        collaborators: [],
+        sections: [
+          { id: 'section-0-executive-summary', title: 'Executive Summary', description: 'Brief overview of the proposal', order: 0 },
+          { id: 'section-1-background-significance', title: 'Background and Significance', description: 'Context and importance of the research', order: 1 },
+          { id: 'section-2-research-objectives', title: 'Research Objectives', description: 'Primary and secondary objectives', order: 2 },
+          { id: 'section-3-methodology', title: 'Methodology', description: 'Research methods and approach', order: 3 },
+          { id: 'section-4-timeline-milestones', title: 'Timeline and Milestones', description: 'Project schedule and deliverables', order: 4 },
+          { id: 'section-5-budget-resources', title: 'Budget and Resources', description: 'Financial requirements and resource allocation', order: 5 },
+          { id: 'section-6-expected-outcomes', title: 'Expected Outcomes', description: 'Anticipated results and impact', order: 6 },
+          { id: 'section-7-references', title: 'References', description: 'Supporting literature', order: 7 }
+        ],
+        status: 'Draft',
+        researchAreas: [],
+        keywords: [],
+        abstract: '',
+        funding: {
+          fundingSource: '',
+          grantNumber: '',
+          budget: { total: 0, items: [] },
+          fundingInstitution: ''
+        }
+      });
+      setProposalActiveStep(0);
+      setCurrentProposalId(null);
+      setSelectedTemplate('blank');
+      setNewProposalOpen(false);
+      
+      // Refresh the manuscripts list to show the new proposal
+      await fetchManuscripts();
+      
+      showSnackbar('Proposal setup complete!', 'success');
+    } catch (error) {
+      console.error('Error finishing proposal:', error);
+      setProposalFormError('Failed to complete proposal setup');
+    }
+  };
+
   const handleCreateManuscript = async () => {
     if (!newManuscript.title || !newManuscript.type || !newManuscript.field) {
       showSnackbar('Please fill in all required fields', 'error');
@@ -706,10 +856,144 @@ export default function CollaborativeWriting() {
     }
   };
 
-  const handleManageTeam = (manuscript) => {
+  const handleManageTeam = async (manuscript) => {
     setSelectedManuscript(manuscript);
     setTeamManagementOpen(true);
     handleMenuClose();
+    
+    // Fetch team data
+    await fetchTeamData(manuscript.id);
+  };
+
+  // Fetch team data (collaborators and pending invitations)
+  const fetchTeamData = async (manuscriptId) => {
+    if (!manuscriptId) return;
+    
+    setTeamLoading(true);
+    try {
+      const response = await fetch(`/api/manuscripts/${manuscriptId}/collaborators`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setTeamData(data.data);
+      } else {
+        console.error('Failed to fetch team data:', data.error);
+        showSnackbar('Failed to load team data', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching team data:', error);
+      showSnackbar('Error loading team data', 'error');
+    } finally {
+      setTeamLoading(false);
+    }
+  };
+
+  // Update collaborator role
+  const handleUpdateCollaboratorRole = async (collaboratorId, newRole, permissions = {}) => {
+    if (!selectedManuscript) return;
+    
+    try {
+      const response = await fetch(`/api/manuscripts/${selectedManuscript.id}/collaborators/${collaboratorId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          role: newRole,
+          ...permissions
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Refresh team data
+        await fetchTeamData(selectedManuscript.id);
+        showSnackbar('Collaborator role updated successfully', 'success');
+      } else {
+        showSnackbar(data.error || 'Failed to update collaborator role', 'error');
+      }
+    } catch (error) {
+      console.error('Error updating collaborator role:', error);
+      showSnackbar('Error updating collaborator role', 'error');
+    }
+  };
+
+  // Remove collaborator
+  const handleRemoveCollaborator = async (collaboratorId) => {
+    if (!selectedManuscript) return;
+    
+    try {
+      const response = await fetch(`/api/manuscripts/${selectedManuscript.id}/collaborators/${collaboratorId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Refresh team data
+        await fetchTeamData(selectedManuscript.id);
+        showSnackbar('Collaborator removed successfully', 'success');
+      } else {
+        showSnackbar(data.error || 'Failed to remove collaborator', 'error');
+      }
+    } catch (error) {
+      console.error('Error removing collaborator:', error);
+      showSnackbar('Error removing collaborator', 'error');
+    }
+  };
+
+  // Cancel invitation
+  const handleCancelInvitation = async (invitationId) => {
+    try {
+      const response = await fetch(`/api/manuscripts/invitations/${invitationId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Refresh team data
+        await fetchTeamData(selectedManuscript.id);
+        showSnackbar('Invitation cancelled successfully', 'success');
+      } else {
+        showSnackbar(data.error || 'Failed to cancel invitation', 'error');
+      }
+    } catch (error) {
+      console.error('Error cancelling invitation:', error);
+      showSnackbar('Error cancelling invitation', 'error');
+    }
+  };
+
+  // Resend invitation
+  const handleResendInvitation = async (invitationId) => {
+    try {
+      const response = await fetch(`/api/manuscripts/invitations/${invitationId}`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        showSnackbar('Invitation resent successfully', 'success');
+      } else {
+        showSnackbar(data.error || 'Failed to resend invitation', 'error');
+      }
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      showSnackbar('Error resending invitation', 'error');
+    }
+  };
+
+  // Handle collaborator menu
+  const handleCollaboratorMenuClick = (event, collaborator) => {
+    setCollaboratorMenuAnchor(event.currentTarget);
+    setSelectedCollaboratorForMenu(collaborator);
+  };
+
+  const handleCollaboratorMenuClose = () => {
+    setCollaboratorMenuAnchor(null);
+    setSelectedCollaboratorForMenu(null);
   };
 
   const handleEditManuscript = (manuscript) => {
@@ -723,19 +1007,41 @@ export default function CollaborativeWriting() {
   const ManuscriptCardComponent = ({ manuscript }) => {
     const statusOption = STATUS_OPTIONS.find(s => s.value === manuscript.status);
     const StatusIcon = statusOption?.icon || PendingIcon;
+    const isProposal = manuscript.type === 'Proposal';
 
     return (
       <Card sx={{
         borderRadius: 2,
         boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        border: '1px solid rgba(0,0,0,0.06)',
+        border: isProposal ? '2px solid #f57c00' : '1px solid rgba(0,0,0,0.06)',
         position: 'relative',
         '&:hover': {
           boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
           transform: 'translateY(-2px)',
         },
-        transition: 'all 0.2s ease'
+        transition: 'all 0.2s ease',
+        background: isProposal ? 'linear-gradient(135deg, #fff8e1 0%, #ffffff 100%)' : 'white'
       }}>
+        {/* Proposal Badge */}
+        {isProposal && (
+          <Box sx={{
+            position: 'absolute',
+            top: -8,
+            right: 16,
+            backgroundColor: '#f57c00',
+            color: 'white',
+            px: 2,
+            py: 0.5,
+            borderRadius: 1,
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            zIndex: 1,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}>
+            PROPOSAL
+          </Box>
+        )}
+        
         <CardContent sx={{ p: 2.5 }}>
           {/* Header with status and actions */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
@@ -757,10 +1063,11 @@ export default function CollaborativeWriting() {
                 size="small"
                 variant="outlined"
                 sx={{ 
-                  borderColor: '#8b6cbc', 
-                  color: '#8b6cbc',
+                  borderColor: isProposal ? '#f57c00' : '#8b6cbc',
+                  color: isProposal ? '#f57c00' : '#8b6cbc',
                   fontSize: '0.7rem',
-                  height: 22
+                  height: 22,
+                  fontWeight: isProposal ? 600 : 400
                 }}
               />
             </Box>
@@ -771,7 +1078,7 @@ export default function CollaborativeWriting() {
               sx={{ 
                 color: '#666',
                 '&:hover': { 
-                  bgcolor: '#8b6cbc10' 
+                  bgcolor: isProposal ? '#f57c0010' : '#8b6cbc10'
                 } 
               }}
             >
@@ -892,9 +1199,9 @@ export default function CollaborativeWriting() {
             startIcon={<EditIcon fontSize="small" />}
             onClick={() => handleEditManuscript(manuscript)}
             sx={{
-              bgcolor: '#8b6cbc',
+              bgcolor: isProposal ? '#f57c00' : '#8b6cbc',
               '&:hover': {
-                bgcolor: '#7b5ca7',
+                bgcolor: isProposal ? '#e65100' : '#7b5ca7',
               },
               textTransform: 'none',
               fontSize: '0.8rem'
@@ -908,11 +1215,11 @@ export default function CollaborativeWriting() {
             startIcon={<GroupsIcon fontSize="small" />}
             onClick={() => handleManageTeam(manuscript)}
             sx={{
-              borderColor: '#8b6cbc',
-              color: '#8b6cbc',
+              borderColor: isProposal ? '#f57c00' : '#8b6cbc',
+              color: isProposal ? '#f57c00' : '#8b6cbc',
               '&:hover': {
-                borderColor: '#8b6cbc',
-                backgroundColor: '#8b6cbc10'
+                borderColor: isProposal ? '#f57c00' : '#8b6cbc',
+                backgroundColor: isProposal ? '#f57c0010' : '#8b6cbc10'
               },
               textTransform: 'none',
               fontSize: '0.8rem'
@@ -1751,11 +2058,29 @@ export default function CollaborativeWriting() {
       {/* Team Management Dialog */}
       <Dialog
         open={teamManagementOpen}
-        onClose={() => setTeamManagementOpen(false)}
-        maxWidth="md"
+        onClose={() => {
+          setTeamManagementOpen(false);
+          setTeamData({ collaborators: [], pendingInvitations: [] });
+          setAddCollaboratorOpen(false);
+          setEditingCollaborator(null);
+        }}
+        maxWidth="lg"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+            minHeight: '70vh'
+          }
+        }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ 
+          borderBottom: '1px solid #e0e0e0',
+          background: 'linear-gradient(135deg, #8b6cbc 0%, #9575d1 100%)',
+          color: 'white',
+          p: 3
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ 
               width: 40, 
@@ -1764,7 +2089,7 @@ export default function CollaborativeWriting() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#8b6cbc',
+                backgroundColor: 'rgba(255,255,255,0.2)',
               color: 'white'
             }}>
               <GroupsIcon />
@@ -1773,79 +2098,324 @@ export default function CollaborativeWriting() {
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Manage Team
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
                 {selectedManuscript?.title}
               </Typography>
             </Box>
+            </Box>
+            <IconButton 
+              onClick={() => setTeamManagementOpen(false)}
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
           </Box>
         </DialogTitle>
-        <DialogContent dividers>
-          {selectedManuscript?.collaborators && (
-            <List>
-              {selectedManuscript.collaborators.map((collaborator) => {
+
+        <DialogContent sx={{ p: 0 }}>
+          {teamLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 300 }}>
+              <CircularProgress sx={{ color: '#8b6cbc' }} />
+            </Box>
+          ) : (
+            <Box sx={{ height: '60vh', overflow: 'hidden' }}>
+              {/* Tabs for different sections */}
+              <Box sx={{ borderBottom: '1px solid #e0e0e0', px: 3, pt: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Team Overview
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
+                  <Chip 
+                    icon={<GroupsIcon fontSize="small" />}
+                    label={`${teamData.collaborators.length} Members`}
+                    variant="outlined"
+                    sx={{ borderColor: '#8b6cbc', color: '#8b6cbc' }}
+                  />
+                  <Chip 
+                    icon={<ScheduleIcon fontSize="small" />}
+                    label={`${teamData.pendingInvitations.length} Pending`}
+                    variant="outlined"
+                    sx={{ borderColor: '#f57c00', color: '#f57c00' }}
+                  />
+                </Box>
+              </Box>
+
+              <Box sx={{ height: 'calc(100% - 100px)', overflow: 'auto', p: 3 }}>
+                {/* Current Team Members */}
+                <Box sx={{ mb: 4 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                      Team Members ({teamData.collaborators.length})
+                    </Typography>
+                    <Button
+                      startIcon={<PersonAddIcon />}
+                      variant="outlined"
+                      size="small"
+                      onClick={() => setAddCollaboratorOpen(true)}
+                      sx={{
+                        borderColor: '#8b6cbc',
+                        color: '#8b6cbc',
+                        '&:hover': {
+                          borderColor: '#8b6cbc',
+                          backgroundColor: '#8b6cbc10'
+                        }
+                      }}
+                    >
+                      Add Member
+                    </Button>
+                  </Box>
+
+                  {teamData.collaborators.length === 0 ? (
+                    <Paper sx={{ p: 3, textAlign: 'center', bgcolor: '#f9f9f9' }}>
+                      <GroupsIcon sx={{ fontSize: 48, color: '#ccc', mb: 1 }} />
+                      <Typography color="textSecondary">
+                        No team members yet. Add collaborators to get started.
+                      </Typography>
+                    </Paper>
+                  ) : (
+                    <List sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+                      {teamData.collaborators.map((collaborator) => {
                 const role = COLLABORATOR_ROLES.find(r => r.value === collaborator.role);
                 const RoleIcon = role?.icon || PersonIcon;
+                        const isOwner = collaborator.role === 'OWNER';
                 
                 return (
-                  <ListItem key={collaborator.id}>
+                          <ListItem key={collaborator.id} divider>
                     <ListItemAvatar>
-                      <Avatar
-                        sx={{
-                          backgroundColor: collaborator.color,
+                              <Avatar sx={{
+                                backgroundColor: isOwner ? '#8b6cbc' : '#2196f3',
                           fontWeight: 600
-                        }}
-                      >
-                        {collaborator.avatar}
+                              }}>
+                                {collaborator.user.givenName?.charAt(0)}{collaborator.user.familyName?.charAt(0)}
                       </Avatar>
                     </ListItemAvatar>
+                            
                     <ListItemText
-                      primary={collaborator.name}
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                    {collaborator.user.givenName} {collaborator.user.familyName}
+                                  </Typography>
+                                  {isOwner && (
+                                    <Chip 
+                                      label="Owner" 
+                                      size="small" 
+                                      sx={{ 
+                                        backgroundColor: '#8b6cbc', 
+                                        color: 'white',
+                                        fontSize: '0.7rem',
+                                        height: 20
+                                      }} 
+                                    />
+                                  )}
+                                </Box>
+                              }
                       secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                <Box sx={{ mt: 0.5 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                           <RoleIcon sx={{ fontSize: 16, color: role?.color }} />
                           <Typography variant="caption" sx={{ color: role?.color, fontWeight: 600 }}>
                             {collaborator.role}
                           </Typography>
+                                  </Box>
+                                  <Typography variant="caption" color="textSecondary">
+                                    {collaborator.user.email}
+                                  </Typography>
+                                  {collaborator.user.primaryInstitution && (
+                                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                                      {collaborator.user.primaryInstitution}
+                                    </Typography>
+                                  )}
                         </Box>
                       }
                     />
+                            
                     <ListItemSecondaryAction>
-                      <IconButton size="small" color="error">
-                        <DeleteIcon />
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                {/* Permissions indicators */}
+                                {collaborator.canEdit && (
+                                  <Tooltip title="Can Edit">
+                                    <Chip size="small" label="Edit" sx={{ fontSize: '0.6rem', height: 20 }} />
+                                  </Tooltip>
+                                )}
+                                {collaborator.canInvite && (
+                                  <Tooltip title="Can Invite">
+                                    <Chip size="small" label="Invite" sx={{ fontSize: '0.6rem', height: 20 }} />
+                                  </Tooltip>
+                                )}
+                                
+                                {!isOwner && (
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => handleCollaboratorMenuClick(e, collaborator)}
+                                    sx={{ color: '#666' }}
+                                  >
+                                    <MoreHorizIcon fontSize="small" />
                       </IconButton>
+                                )}
+                              </Box>
                     </ListItemSecondaryAction>
                   </ListItem>
                 );
               })}
             </List>
           )}
-          
-          <Divider sx={{ my: 2 }} />
-          
-          <Button
-            startIcon={<PersonAddIcon />}
-            variant="outlined"
-            fullWidth
-            sx={{
-              borderColor: '#8b6cbc40',
-              color: '#8b6cbc',
-              '&:hover': {
-                borderColor: '#8b6cbc',
-                backgroundColor: '#8b6cbc10'
-              }
-            }}
-          >
-            Add Collaborator
-          </Button>
+                </Box>
+
+                {/* Pending Invitations */}
+                {teamData.pendingInvitations.length > 0 && (
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                      Pending Invitations ({teamData.pendingInvitations.length})
+                    </Typography>
+                    
+                    <List sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+                      {teamData.pendingInvitations.map((invitation) => (
+                        <ListItem key={invitation.id} divider>
+                          <ListItemAvatar>
+                            <Avatar sx={{ backgroundColor: '#f57c00' }}>
+                              <PendingIcon />
+                            </Avatar>
+                          </ListItemAvatar>
+                          
+                          <ListItemText
+                            primary={
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                {invitation.givenName} {invitation.familyName}
+                              </Typography>
+                            }
+                            secondary={
+                              <Box sx={{ mt: 0.5 }}>
+                                <Typography variant="caption" color="textSecondary">
+                                  {invitation.email}
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                  <Chip 
+                                    label={invitation.role} 
+                                    size="small" 
+                                    sx={{ fontSize: '0.7rem', height: 20 }}
+                                  />
+                                  <Typography variant="caption" color="textSecondary">
+                                    Invited {new Date(invitation.createdAt).toLocaleDateString()}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            }
+                          />
+                          
+                          <ListItemSecondaryAction>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Tooltip title="Resend Invitation">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleResendInvitation(invitation.id)}
+                                  sx={{ color: '#2196f3' }}
+                                >
+                                  <RefreshIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Cancel Invitation">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleCancelInvitation(invitation.id)}
+                                  sx={{ color: '#f44336' }}
+                                >
+                                  <CancelIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          )}
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button
-            onClick={() => setTeamManagementOpen(false)}
-            color="inherit"
-          >
-            Close
-          </Button>
-        </DialogActions>
+      </Dialog>
+
+      {/* Collaborator Menu */}
+      <Menu
+        anchorEl={collaboratorMenuAnchor}
+        open={Boolean(collaboratorMenuAnchor)}
+        onClose={handleCollaboratorMenuClose}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            minWidth: 200
+          }
+        }}
+      >
+        <MenuItem onClick={() => {
+          setEditingCollaborator(selectedCollaboratorForMenu);
+          handleCollaboratorMenuClose();
+        }}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit Role</ListItemText>
+        </MenuItem>
+        
+        <MenuItem 
+          onClick={() => {
+            if (selectedCollaboratorForMenu) {
+              handleRemoveCollaborator(selectedCollaboratorForMenu.id);
+            }
+            handleCollaboratorMenuClose();
+          }}
+          sx={{ color: '#f44336' }}
+        >
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" sx={{ color: '#f44336' }} />
+          </ListItemIcon>
+          <ListItemText>Remove from Team</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Add Collaborator Dialog */}
+      <Dialog
+        open={addCollaboratorOpen}
+        onClose={() => setAddCollaboratorOpen(false)}
+        maxWidth="md"
+            fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+          }
+        }}
+      >
+        <DialogTitle sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          background: 'linear-gradient(135deg, #8b6cbc 0%, #9575d1 100%)',
+          color: 'white'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <PersonAddIcon />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Add Team Member
+            </Typography>
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent sx={{ p: 0 }}>
+          {selectedManuscript && (
+            <OrcidCollaboratorInvite
+              manuscriptId={selectedManuscript.id}
+              collaborators={[]}
+              onCollaboratorsChange={async () => {
+                // Refresh team data after adding collaborator
+                await fetchTeamData(selectedManuscript.id);
+                setAddCollaboratorOpen(false);
+              }}
+            />
+          )}
+        </DialogContent>
       </Dialog>
 
       {/* Enhanced New Manuscript Modal */}
@@ -2162,7 +2732,42 @@ export default function CollaborativeWriting() {
       {/* New Proposal Modal */}
       <Dialog
         open={newProposalOpen}
-        onClose={() => setNewProposalOpen(false)}
+        onClose={() => {
+          setNewProposalOpen(false);
+          setProposalActiveStep(0);
+          setCurrentProposalId(null);
+          setSelectedTemplate('blank');
+          setProposalFormError(null);
+          setNewProposal({
+            title: '',
+            type: 'Research Proposal',
+            fields: [],
+            otherFields: '',
+            creator: user?.givenName + ' ' + user?.familyName || '',
+            creatorOrcid: user?.orcidId || '',
+            collaborators: [],
+            sections: [
+              { id: 'section-0-executive-summary', title: 'Executive Summary', description: 'Brief overview of the proposal', order: 0 },
+              { id: 'section-1-background-significance', title: 'Background and Significance', description: 'Context and importance of the research', order: 1 },
+              { id: 'section-2-research-objectives', title: 'Research Objectives', description: 'Primary and secondary objectives', order: 2 },
+              { id: 'section-3-methodology', title: 'Methodology', description: 'Research methods and approach', order: 3 },
+              { id: 'section-4-timeline-milestones', title: 'Timeline and Milestones', description: 'Project schedule and deliverables', order: 4 },
+              { id: 'section-5-budget-resources', title: 'Budget and Resources', description: 'Financial requirements and resource allocation', order: 5 },
+              { id: 'section-6-expected-outcomes', title: 'Expected Outcomes', description: 'Anticipated results and impact', order: 6 },
+              { id: 'section-7-references', title: 'References', description: 'Supporting literature', order: 7 }
+            ],
+            status: 'Draft',
+            researchAreas: [],
+            keywords: [],
+            abstract: '',
+            funding: {
+              fundingSource: '',
+              grantNumber: '',
+              budget: { total: 0, items: [] },
+              fundingInstitution: ''
+            }
+          });
+        }}
         maxWidth="md"
         fullWidth
         PaperProps={{
@@ -2196,6 +2801,19 @@ export default function CollaborativeWriting() {
             </Alert>
           )}
 
+          {/* Stepper */}
+          <Box sx={{ px: 3, pt: 3 }}>
+            <Stepper activeStep={proposalActiveStep} sx={{ mb: 4 }}>
+              {proposalSteps.map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          </Box>
+
+          {/* Step Content */}
+          {proposalActiveStep === 0 && (
           <Box sx={{ p: 4 }}>
             <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
               Proposal Details
@@ -2290,30 +2908,135 @@ export default function CollaborativeWriting() {
               />
             </Box>
           </Box>
+          )}
+
+          {/* Step 2: Select Template */}
+          {proposalActiveStep === 1 && (
+            <Box sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                Select Template
+              </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {/* Template Options */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>
+                    Choose a proposal template
+                  </Typography>
+                  
+                  <Grid container spacing={2}>
+                    {/* Blank Template */}
+                    <Grid item xs={12} md={6}>
+                      <Paper
+                        elevation={selectedTemplate === 'blank' ? 4 : 1}
+                        sx={{
+                          p: 3,
+                          cursor: 'pointer',
+                          border: selectedTemplate === 'blank' ? '2px solid #8b6cbc' : '2px solid transparent',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            elevation: 3,
+                            transform: 'translateY(-2px)'
+                          }
+                        }}
+                        onClick={() => setSelectedTemplate('blank')}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <DescriptionIcon sx={{ mr: 2, color: '#8b6cbc', fontSize: 28 }} />
+                          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                            Blank Template
+                          </Typography>
+                          {selectedTemplate === 'blank' && (
+                            <CheckCircleIcon sx={{ ml: 'auto', color: '#8b6cbc' }} />
+                          )}
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Start with a blank proposal template with standard sections including Executive Summary, Background, Methodology, and more.
+                        </Typography>
+                        <Box sx={{ mt: 2 }}>
+                          <Chip label="Recommended" size="small" sx={{ backgroundColor: '#e3f2fd', color: '#1976d2' }} />
+                        </Box>
+                      </Paper>
+                    </Grid>
+
+                    {/* Upload Template (Disabled) */}
+                    <Grid item xs={12} md={6}>
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          backgroundColor: '#f5f5f5',
+                          border: '2px solid #e0e0e0',
+                          opacity: 0.6
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <CloudUploadIcon sx={{ mr: 2, color: '#9e9e9e', fontSize: 28 }} />
+                          <Typography variant="h6" sx={{ fontWeight: 600, color: '#9e9e9e' }}>
+                            Upload Template
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Upload your own proposal template file (Word, PDF, or Google Docs).
+                        </Typography>
+                        <Box sx={{ mt: 2 }}>
+                          <Chip label="Coming Soon" size="small" sx={{ backgroundColor: '#fff3e0', color: '#f57c00' }} />
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Box>
+            </Box>
+          )}
+
+          {/* Step 3: Invite Collaborators */}
+          {proposalActiveStep === 2 && (
+            <Box sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                Invite Collaborators
+              </Typography>
+
+              {/* ORCID Collaborator Invite Component */}
+              <OrcidCollaboratorInvite
+                manuscriptId={currentProposalId}
+                collaborators={newProposal.collaborators}
+                onCollaboratorsChange={(updatedCollaborators) => {
+                  setNewProposal(prev => ({
+                    ...prev,
+                    collaborators: updatedCollaborators
+                  }));
+                }}
+              />
+            </Box>
+          )}
         </DialogContent>
 
-        <DialogActions sx={{ borderTop: 1, borderColor: 'divider', p: 3, gap: 2 }}>
-          <Button onClick={() => setNewProposalOpen(false)}>
-            Cancel
-          </Button>
-          <Box sx={{ flex: 1 }} />
-          <Button
-            variant="contained"
-            disabled={!newProposal.title || newProposal.fields.length === 0 || isSubmittingProposal}
-            startIcon={isSubmittingProposal ? <CircularProgress size={20} color="inherit" /> : <RocketLaunchIcon />}
-            sx={{ background: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)' }}
-            onClick={() => {
-              showSnackbar('Proposal created successfully!', 'success');
+        <DialogActions sx={{ p: 3, gap: 2 }}>
+          <Button onClick={() => {
               setNewProposalOpen(false);
+            setProposalActiveStep(0);
+            setCurrentProposalId(null);
+            setSelectedTemplate('blank');
+            setProposalFormError(null);
               setNewProposal({
                 title: '',
                 type: 'Research Proposal',
                 fields: [],
                 otherFields: '',
-                creator: user?.name || '',
-                creatorOrcid: user?.orcid || '',
+              creator: user?.givenName + ' ' + user?.familyName || '',
+              creatorOrcid: user?.orcidId || '',
                 collaborators: [],
-                sections: [],
+              sections: [
+                { id: 'section-0-executive-summary', title: 'Executive Summary', description: 'Brief overview of the proposal', order: 0 },
+                { id: 'section-1-background-significance', title: 'Background and Significance', description: 'Context and importance of the research', order: 1 },
+                { id: 'section-2-research-objectives', title: 'Research Objectives', description: 'Primary and secondary objectives', order: 2 },
+                { id: 'section-3-methodology', title: 'Methodology', description: 'Research methods and approach', order: 3 },
+                { id: 'section-4-timeline-milestones', title: 'Timeline and Milestones', description: 'Project schedule and deliverables', order: 4 },
+                { id: 'section-5-budget-resources', title: 'Budget and Resources', description: 'Financial requirements and resource allocation', order: 5 },
+                { id: 'section-6-expected-outcomes', title: 'Expected Outcomes', description: 'Anticipated results and impact', order: 6 },
+                { id: 'section-7-references', title: 'References', description: 'Supporting literature', order: 7 }
+              ],
                 status: 'Draft',
                 researchAreas: [],
                 keywords: [],
@@ -2325,10 +3048,46 @@ export default function CollaborativeWriting() {
                   fundingInstitution: ''
                 }
               });
-            }}
-          >
-            {isSubmittingProposal ? 'Creating Proposal...' : 'Create Proposal'}
+          }}>
+            Cancel
           </Button>
+          
+          <Box sx={{ flex: 1 }} />
+          
+          {proposalActiveStep > 0 && (
+            <Button onClick={() => setProposalActiveStep(prev => prev - 1)}>
+              Back
+            </Button>
+          )}
+          
+          {proposalActiveStep === 0 ? (
+            <Button
+              variant="contained"
+              disabled={!newProposal.title || newProposal.fields.length === 0 || isSubmittingProposal}
+              startIcon={isSubmittingProposal ? <CircularProgress size={20} color="inherit" /> : null}
+              onClick={handleCreateProposalStep1}
+              sx={{ background: 'linear-gradient(135deg, #8b6cbc 0%, #9575d1 100%)' }}
+            >
+              {isSubmittingProposal ? 'Creating...' : 'Create & Continue'}
+          </Button>
+          ) : proposalActiveStep === 1 ? (
+            <Button
+              variant="contained"
+              onClick={handleProposalNextStep}
+              sx={{ background: 'linear-gradient(135deg, #8b6cbc 0%, #9575d1 100%)' }}
+            >
+              Continue
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<CheckIcon />}
+              onClick={handleFinishProposal}
+              sx={{ background: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)' }}
+            >
+              Finish
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
