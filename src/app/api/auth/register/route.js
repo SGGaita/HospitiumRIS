@@ -68,35 +68,60 @@ export async function POST(request) {
       errors.accountType = 'Valid account type is required';
     }
     
-    if (!givenName?.trim()) {
-      errors.givenName = 'Given name is required';
-    }
-    
-    if (!familyName?.trim()) {
-      errors.familyName = 'Family name is required';
-    }
-    
-    if (!email) {
-      errors.email = 'Email is required';
-    } else if (!validateEmail(email)) {
-      errors.email = 'Invalid email format';
-    }
-    
-    if (!password) {
-      errors.password = 'Password is required';
-    } else {
-      const passwordValidation = validatePassword(password);
-      if (!passwordValidation.isValid) {
-        errors.password = 'Password must contain at least 8 characters, including uppercase, lowercase, number, and special character';
+    // Foundation Admin has simplified validation
+    if (accountType === 'FOUNDATION_ADMIN') {
+      if (!email) {
+        errors.email = 'Email is required';
+      } else if (!validateEmail(email)) {
+        errors.email = 'Invalid email format';
+      } else if (!email.toLowerCase().endsWith('@hospitium.org')) {
+        errors.email = 'Only @hospitium.org email addresses are allowed for Foundation Administrator accounts';
       }
-    }
-    
-    if (password !== confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+      
+      if (!password) {
+        errors.password = 'Password is required';
+      } else {
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
+          errors.password = 'Password must contain at least 8 characters, including uppercase, lowercase, number, and special character';
+        }
+      }
+      
+      if (password !== confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match';
+      }
+    } else {
+      // Standard validation for RESEARCHER and RESEARCH_ADMIN
+      if (!givenName?.trim()) {
+        errors.givenName = 'Given name is required';
+      }
+      
+      if (!familyName?.trim()) {
+        errors.familyName = 'Family name is required';
+      }
+      
+      if (!email) {
+        errors.email = 'Email is required';
+      } else if (!validateEmail(email)) {
+        errors.email = 'Invalid email format';
+      }
+      
+      if (!password) {
+        errors.password = 'Password is required';
+      } else {
+        const passwordValidation = validatePassword(password);
+        if (!passwordValidation.isValid) {
+          errors.password = 'Password must contain at least 8 characters, including uppercase, lowercase, number, and special character';
+        }
+      }
+      
+      if (password !== confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match';
+      }
     }
 
     // Account type specific validation
-    if (accountType === 'RESEARCHER' || accountType === 'RESEARCH_ADMIN' || accountType === 'FOUNDATION_ADMIN') {
+    if (accountType === 'RESEARCHER' || accountType === 'RESEARCH_ADMIN') {
       if (!primaryInstitution?.trim()) {
         errors.primaryInstitution = 'Primary institution is required';
       }
@@ -106,8 +131,8 @@ export async function POST(request) {
       if (!startYear) {
         errors.startYear = 'Start year is required';
       }
-    } else {
-      // For non-researchers (if any future account types)
+    } else if (accountType !== 'FOUNDATION_ADMIN') {
+      // For non-researchers and non-foundation admins (if any future account types)
       if (!confirmEmail) {
         errors.confirmEmail = 'Email confirmation is required';
       } else if (email !== confirmEmail) {
@@ -128,21 +153,6 @@ export async function POST(request) {
       }
     }
 
-    // Foundation details validation for FOUNDATION_ADMIN  
-    if (accountType === 'FOUNDATION_ADMIN') {
-      if (!institutionName?.trim()) {
-        errors.institutionName = 'Institution name is required';
-      }
-      if (!foundationName?.trim()) {
-        errors.foundationName = 'Foundation name is required';
-      }
-      if (!foundationType) {
-        errors.foundationType = 'Foundation type is required';
-      }
-      if (!foundationCountry) {
-        errors.foundationCountry = 'Country is required';
-      }
-    }
 
     // Return validation errors if any
     if (Object.keys(errors).length > 0) {
@@ -181,23 +191,35 @@ export async function POST(request) {
 
     // Create user and related records in a transaction
     const result = await prisma.$transaction(async (tx) => {
+      // For Foundation Admins, extract name from email
+      let userGivenName, userFamilyName;
+      if (accountType === 'FOUNDATION_ADMIN') {
+        const emailPrefix = email.split('@')[0];
+        const nameParts = emailPrefix.split('.');
+        userGivenName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'Foundation';
+        userFamilyName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'Administrator';
+      } else {
+        userGivenName = (orcidData?.givenNames || givenName).trim();
+        userFamilyName = (orcidData?.familyName || familyName).trim();
+      }
+
       // Create user
       const user = await tx.user.create({
         data: {
           accountType,
-          givenName: (orcidData?.givenNames || givenName).trim(),
-          familyName: (orcidData?.familyName || familyName).trim(),
+          givenName: userGivenName,
+          familyName: userFamilyName,
           email: email.toLowerCase(),
           confirmEmail: confirmEmail || null,
           passwordHash,
           emailVerifyToken: activationToken,
           emailVerifyExpires: tokenExpires,
-          orcidId: orcidData?.orcidId || orcidId || null,
-          orcidGivenNames: orcidData?.givenNames || orcidGivenNames || null,
-          orcidFamilyName: orcidData?.familyName || orcidFamilyName || null,
-          primaryInstitution: primaryInstitution?.trim() || null,
-          startMonth: startMonth || null,
-          startYear: startYear || null,
+          orcidId: accountType === 'FOUNDATION_ADMIN' ? null : (orcidData?.orcidId || orcidId || null),
+          orcidGivenNames: accountType === 'FOUNDATION_ADMIN' ? null : (orcidData?.givenNames || orcidGivenNames || null),
+          orcidFamilyName: accountType === 'FOUNDATION_ADMIN' ? null : (orcidData?.familyName || orcidFamilyName || null),
+          primaryInstitution: accountType === 'FOUNDATION_ADMIN' ? 'Hospitium Foundation' : (primaryInstitution?.trim() || null),
+          startMonth: accountType === 'FOUNDATION_ADMIN' ? null : (startMonth || null),
+          startYear: accountType === 'FOUNDATION_ADMIN' ? null : (startYear || null),
         }
       });
 
@@ -214,21 +236,7 @@ export async function POST(request) {
         });
       }
 
-      // Create foundation record for FOUNDATION_ADMIN
-      if (accountType === 'FOUNDATION_ADMIN') {
-        await tx.foundation.create({
-          data: {
-            userId: user.id,
-            institutionName: institutionName.trim(),
-            foundationName: foundationName.trim(),
-            type: foundationType,
-            country: foundationCountry,
-            website: foundationWebsite || null,
-            focusArea: foundationFocusArea || null,
-            description: foundationDescription || null,
-          }
-        });
-      }
+      // Foundation Admins don't need additional records - simplified registration
 
       return user;
     });

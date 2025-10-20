@@ -208,6 +208,7 @@ model Publication {
   // Relations
   authorRelations PublicationAuthor[] @relation("authorRelations")
   manuscriptCitations ManuscriptCitation[]
+  proposals ProposalPublication[]
   
   @@map("publications")
 }
@@ -499,6 +500,7 @@ model Manuscript {
   comments    ManuscriptComment[]
   versions    ManuscriptVersion[]
   trackedChanges TrackedChange[]
+  proposals   ProposalManuscript[]
   
   @@map("manuscripts")
 }
@@ -749,4 +751,117 @@ enum ChangeStatus {
   PENDING   // Change is pending review
   ACCEPTED  // Change has been accepted
   REJECTED  // Change has been rejected
+}
+
+// Proposal Management Models
+enum ProposalStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  REVISION_REQUESTED
+}
+
+model Proposal {
+  id          String   @id @default(cuid())
+  
+  // Core Information
+  title       String
+  principalInvestigator String
+  principalInvestigatorOrcid String?
+  coInvestigators Json[] // Array of co-investigator objects
+  departments String[] // Array of department names
+  startDate   DateTime?
+  endDate     DateTime?
+  
+  // Research Details
+  researchAreas String[] // Array of research areas
+  researchObjectives String?
+  methodology String?
+  abstract    String?
+  
+  // Project Management
+  milestones  Json[] // Array of milestone objects
+  deliverables Json[] // Array of deliverable objects
+  
+  // Funding and Grants
+  fundingSource String?
+  grantNumber String?
+  fundingInstitution String?
+  grantStartDate DateTime?
+  grantEndDate DateTime?
+  totalBudgetAmount Decimal? @db.Decimal(15,2)
+  
+  // Ethical Considerations
+  ethicalConsiderationsOverview String?
+  consentProcedures String?
+  dataSecurityMeasures String?
+  ethicsApprovalStatus String?
+  ethicsApprovalReference String?
+  ethicsCommittee String?
+  approvalDate DateTime?
+  
+  // Related Publications & Files
+  publicationRelevance String?
+  
+  // Summary Information
+  impactStatement String?
+  disseminationPlan String?
+  
+  // File uploads (stored as JSON with file metadata)
+  ethicsDocuments Json[] // Array of file metadata objects
+  dataManagementPlan Json[] // Array of file metadata objects
+  otherRelatedFiles Json[] // Array of file metadata objects
+  
+  // Status and Metadata
+  status      ProposalStatus @default(DRAFT)
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  publications ProposalPublication[]
+  manuscripts ProposalManuscript[]
+  
+  // TODO: Add userId when authentication is implemented
+  // userId      String
+  // user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("proposals")
+}
+
+// Junction table for Proposal-Publication relationships
+model ProposalPublication {
+  id            String @id @default(cuid())
+  proposalId    String
+  publicationId String
+  
+  // Relations
+  proposal      Proposal    @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  
+  @@unique([proposalId, publicationId])
+  @@map("proposal_publications")
+}
+
+// Junction table for Proposal-Manuscript (collaborative proposals) relationships
+model ProposalManuscript {
+  id            String @id @default(cuid())
+  proposalId    String
+  manuscriptId  String
+  
+  // Relations
+  proposal      Proposal   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  manuscript    Manuscript @relation(fields: [manuscriptId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  
+  @@unique([proposalId, manuscriptId])
+  @@map("proposal_manuscripts")
 }

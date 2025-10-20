@@ -185,9 +185,9 @@ const Navbar = () => {
                 items: [
                   {
                     label: 'Create Proposal',
-                    description: 'Start new research proposal',
+                    description: 'Manage research proposals',
                     icon: <ProposalIcon sx={{ color: '#8b6cbc', fontSize: 20 }} />,
-                    path: '/researcher/projects/proposals/create'
+                    path: '/researcher/projects/proposals/list'
                   },
                   {
                     label: 'Follow-ups',

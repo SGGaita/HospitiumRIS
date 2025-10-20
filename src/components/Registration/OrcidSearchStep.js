@@ -10,8 +10,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  FormControlLabel,
-  Checkbox,
   IconButton,
 } from '@mui/material';
 import {
@@ -30,7 +28,6 @@ const OrcidSearchStep = ({ onOrcidSelect, onSkipOrcid, selectedOrcidProfile, err
   const [orcidResults, setOrcidResults] = useState([]);
   const [orcidError, setOrcidError] = useState(null);
   const [hasSearchedOrcid, setHasSearchedOrcid] = useState(false);
-  const [skipOrcid, setSkipOrcid] = useState(false);
 
   // Handle ORCID search input changes
   const handleOrcidInputChange = (e) => {
@@ -108,12 +105,6 @@ const OrcidSearchStep = ({ onOrcidSelect, onSkipOrcid, selectedOrcidProfile, err
     onOrcidSelect(profile);
   };
 
-  // Handle skip ORCID
-  const handleSkipOrcidChange = (event) => {
-    const checked = event.target.checked;
-    setSkipOrcid(checked);
-    onSkipOrcid(checked);
-  };
 
   // Clear ORCID search results
   const handleClearOrcidResults = () => {
@@ -143,7 +134,6 @@ const OrcidSearchStep = ({ onOrcidSelect, onSkipOrcid, selectedOrcidProfile, err
           onChange={handleOrcidInputChange}
           fullWidth
           size="small"
-          disabled={skipOrcid}
         />
         <TextField
           label="Family Name"
@@ -152,7 +142,6 @@ const OrcidSearchStep = ({ onOrcidSelect, onSkipOrcid, selectedOrcidProfile, err
           onChange={handleOrcidInputChange}
           fullWidth
           size="small"
-          disabled={skipOrcid}
         />
       </Box>
 
@@ -160,7 +149,7 @@ const OrcidSearchStep = ({ onOrcidSelect, onSkipOrcid, selectedOrcidProfile, err
         <Button
           variant="contained"
           onClick={handleOrcidSearch}
-          disabled={orcidLoading || !orcidSearchData.givenNames || !orcidSearchData.familyName || skipOrcid}
+          disabled={orcidLoading || !orcidSearchData.givenNames || !orcidSearchData.familyName}
           startIcon={orcidLoading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
           fullWidth
           sx={{
@@ -173,24 +162,6 @@ const OrcidSearchStep = ({ onOrcidSelect, onSkipOrcid, selectedOrcidProfile, err
         </Button>
       </Box>
 
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={skipOrcid}
-            onChange={handleSkipOrcidChange}
-            name="skipOrcid"
-            color="primary"
-          />
-        }
-        label="Skip ORCID search and proceed with manual registration"
-        sx={{
-          mb: 2,
-          '& .MuiFormControlLabel-label': {
-            fontSize: '0.875rem',
-            color: 'text.secondary',
-          },
-        }}
-      />
 
       {selectedOrcidProfile && (
         <Alert severity="success" sx={{ mb: 2 }}>
@@ -199,13 +170,13 @@ const OrcidSearchStep = ({ onOrcidSelect, onSkipOrcid, selectedOrcidProfile, err
         </Alert>
       )}
 
-      {orcidError && !skipOrcid && (
+      {orcidError && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setOrcidError(null)}>
           {orcidError}
         </Alert>
       )}
 
-      {orcidResults.length > 0 && !skipOrcid && (
+      {orcidResults.length > 0 && (
         <Paper 
           variant="outlined" 
           sx={{ 
@@ -279,7 +250,7 @@ const OrcidSearchStep = ({ onOrcidSelect, onSkipOrcid, selectedOrcidProfile, err
         </Paper>
       )}
 
-      {orcidResults.length === 0 && hasSearchedOrcid && !orcidLoading && !skipOrcid && orcidSearchData.givenNames && orcidSearchData.familyName && (
+      {orcidResults.length === 0 && hasSearchedOrcid && !orcidLoading && orcidSearchData.givenNames && orcidSearchData.familyName && (
         <Alert severity="info" sx={{ mb: 2 }}>
           No ORCID profiles found matching your search. Please try different names or continue with manual registration.
         </Alert>

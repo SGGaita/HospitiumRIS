@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
+  Paper,
   Typography,
   CircularProgress,
   Button,
@@ -13,15 +14,18 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Login as LoginIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import { useThemeMode } from '../../components/ThemeProvider';
 
 const ActivatePage = () => {
   const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isDarkMode } = useThemeMode();
   
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -67,30 +71,28 @@ const ActivatePage = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: theme.palette.mode === 'dark'
-          ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
-          : 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #8b6cbc 100%)',
-        py: 4,
+        backgroundColor: '#ffffff',
+        py: 3,
       }}
     >
       <Container maxWidth="sm">
-        <Box
+        <Paper
+          elevation={0}
           sx={{
-            backgroundColor: theme.palette.background.paper,
-            borderRadius: 4,
-            boxShadow: '0 20px 40px rgba(139, 108, 188, 0.2)',
             p: { xs: 3, sm: 4 },
+            backgroundColor: '#ffffff',
+            border: '1px solid rgba(0,0,0,0.1)',
+            borderRadius: 2,
             textAlign: 'center',
           }}
         >
           {/* Logo */}
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 3 }}>
             <Image
-              src="/hospitium-logo.png"
+              src={isDarkMode ? "/hospitium-logo-dark.png" : "/hospitium-logo.png"}
               alt="Hospitium RIS"
-              width={180}
-              height={40}
-              style={{ objectFit: 'contain' }}
+              width={140}
+              height={32}
               priority
             />
           </Box>
@@ -99,14 +101,14 @@ const ActivatePage = () => {
           {loading && (
             <Box>
               <CircularProgress 
-                size={40} 
-                sx={{ color: '#8b6cbc', mb: 3 }} 
+                size={32} 
+                sx={{ color: theme.palette.primary.main, mb: 2 }} 
               />
-              <Typography variant="h5" sx={{ mb: 1 }}>
-                Activating Your Account
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                Activating Account
               </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Please wait...
+              <Typography variant="body2" color="text.secondary">
+                Please wait while we verify your account...
               </Typography>
             </Box>
           )}
@@ -114,35 +116,27 @@ const ActivatePage = () => {
           {/* Success State */}
           {success && (
             <Box>
-              <CheckCircleIcon 
-                sx={{ 
-                  fontSize: 60, 
-                  color: theme.palette.success.main, 
-                  mb: 2 
-                }} 
-              />
-              <Typography variant="h4" sx={{ mb: 2, fontWeight: 600, color: theme.palette.success.main }}>
-                Account Activated!
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+                <CheckCircleIcon sx={{ color: theme.palette.success.main, fontSize: 28 }} />
+                <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.success.main }}>
+                  Account Activated
+                </Typography>
+              </Box>
+              <Typography variant="body1" sx={{ mb: 3, color: theme.palette.text.secondary }}>
+                Your account is now active and ready to use
               </Typography>
-              <Typography variant="body1" sx={{ mb: 4, color: theme.palette.text.secondary }}>
-                Your account is now active. You can login and start using Hospitium RIS.
-              </Typography>
+              <Alert severity="success" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  Welcome to Hospitium RIS! You can now access all features.
+                </Typography>
+              </Alert>
               <Button
                 variant="contained"
-                size="large"
                 onClick={handleLoginClick}
                 startIcon={<LoginIcon />}
-                sx={{
-                  backgroundColor: '#8b6cbc',
-                  px: 4,
-                  py: 1.5,
-                  fontWeight: 600,
-                  '&:hover': {
-                    backgroundColor: '#7a5ba8',
-                  },
-                }}
+                sx={{ px: 3, py: 1 }}
               >
-                Login Now
+                Continue to Login
               </Button>
             </Box>
           )}
@@ -150,36 +144,46 @@ const ActivatePage = () => {
           {/* Error State */}
           {error && (
             <Box>
-              <ErrorIcon 
-                sx={{ 
-                  fontSize: 60, 
-                  color: theme.palette.error.main, 
-                  mb: 2 
-                }} 
-              />
-              <Typography variant="h5" sx={{ mb: 2, fontWeight: 600, color: theme.palette.error.main }}>
-                Activation Failed
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+                <ErrorIcon sx={{ color: theme.palette.error.main, fontSize: 28 }} />
+                <Typography variant="h5" sx={{ fontWeight: 600, color: theme.palette.error.main }}>
+                  Activation Failed
+                </Typography>
+              </Box>
+              <Typography variant="body1" sx={{ mb: 3, color: theme.palette.text.secondary }}>
+                We couldn't activate your account
               </Typography>
               <Alert severity="error" sx={{ mb: 3 }}>
-                {error}
+                <Typography variant="body2">
+                  {error}
+                </Typography>
               </Alert>
-              <Button
-                variant="outlined"
-                onClick={() => router.push('/resend-activation')}
-                sx={{ 
-                  borderColor: '#8b6cbc',
-                  color: '#8b6cbc',
-                  '&:hover': {
-                    borderColor: '#7a5ba8',
-                    backgroundColor: 'rgba(139, 108, 188, 0.1)',
-                  },
-                }}
-              >
-                Get New Activation Link
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+                <Button
+                  variant="contained"
+                  onClick={() => router.push('/resend-activation')}
+                  startIcon={<RefreshIcon />}
+                  size="small"
+                >
+                  Get New Link
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => router.push('/login')}
+                  startIcon={<LoginIcon />}
+                  size="small"
+                >
+                  Try Login
+                </Button>
+              </Box>
             </Box>
           )}
-        </Box>
+
+          {/* Footer */}
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', mt: 3, display: 'block' }}>
+            Hospitium RIS - Research Information System
+          </Typography>
+        </Paper>
       </Container>
     </Box>
   );

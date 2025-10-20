@@ -1011,16 +1011,18 @@ export default function CollaborativeWriting() {
 
     return (
       <Card sx={{
-        borderRadius: 2,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        border: isProposal ? '2px solid #f57c00' : '1px solid rgba(0,0,0,0.06)',
+        borderRadius: 3,
+        boxShadow: '0 2px 8px rgba(139, 108, 188, 0.08)',
+        border: '1px solid rgba(139, 108, 188, 0.12)',
         position: 'relative',
         '&:hover': {
-          boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-          transform: 'translateY(-2px)',
+          boxShadow: '0 8px 24px rgba(139, 108, 188, 0.15)',
+          transform: 'translateY(-4px)',
+          borderColor: 'rgba(139, 108, 188, 0.25)'
         },
-        transition: 'all 0.2s ease',
-        background: isProposal ? 'linear-gradient(135deg, #fff8e1 0%, #ffffff 100%)' : 'white'
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        background: 'linear-gradient(135deg, #ffffff 0%, #fafbfd 100%)',
+        overflow: 'hidden'
       }}>
         {/* Proposal Badge */}
         {isProposal && (
@@ -1028,34 +1030,36 @@ export default function CollaborativeWriting() {
             position: 'absolute',
             top: -8,
             right: 16,
-            backgroundColor: '#f57c00',
+            backgroundColor: '#8b6cbc',
             color: 'white',
             px: 2,
             py: 0.5,
-            borderRadius: 1,
+            borderRadius: 2,
             fontSize: '0.75rem',
             fontWeight: 600,
             zIndex: 1,
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            boxShadow: '0 4px 12px rgba(139, 108, 188, 0.3)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             PROPOSAL
           </Box>
         )}
         
-        <CardContent sx={{ p: 2.5 }}>
+        <CardContent sx={{ p: 3 }}>
           {/* Header with status and actions */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Chip
                 icon={<StatusIcon sx={{ fontSize: 14 }} />}
                 label={manuscript.status}
                 size="small"
                 sx={{
-                  backgroundColor: statusOption?.color,
+                  backgroundColor: '#8b6cbc',
                   color: 'white',
                   fontWeight: 600,
-                  fontSize: '0.7rem',
-                  height: 22
+                  fontSize: '0.75rem',
+                  height: 24,
+                  borderRadius: 2
                 }}
               />
               <Chip
@@ -1063,11 +1067,13 @@ export default function CollaborativeWriting() {
                 size="small"
                 variant="outlined"
                 sx={{ 
-                  borderColor: isProposal ? '#f57c00' : '#8b6cbc',
-                  color: isProposal ? '#f57c00' : '#8b6cbc',
-                  fontSize: '0.7rem',
-                  height: 22,
-                  fontWeight: isProposal ? 600 : 400
+                  borderColor: '#8b6cbc', 
+                  color: '#8b6cbc',
+                  fontSize: '0.75rem',
+                  height: 24,
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  backgroundColor: 'rgba(139, 108, 188, 0.04)'
                 }}
               />
             </Box>
@@ -1076,10 +1082,12 @@ export default function CollaborativeWriting() {
               onClick={(e) => handleMenuClick(e, manuscript)}
               title="More actions"
               sx={{ 
-                color: '#666',
+                color: '#8b6cbc',
                 '&:hover': { 
-                  bgcolor: isProposal ? '#f57c0010' : '#8b6cbc10'
-                } 
+                  bgcolor: 'rgba(139, 108, 188, 0.08)',
+                  transform: 'scale(1.1)'
+                },
+                transition: 'all 0.2s ease'
               }}
             >
               <MoreVertIcon fontSize="small" />
@@ -1091,120 +1099,171 @@ export default function CollaborativeWriting() {
             variant="h6" 
             sx={{ 
               mb: 2, 
-              fontSize: '1rem', 
+              fontSize: '1.1rem', 
               lineHeight: 1.4,
               fontWeight: 600,
               color: '#2D3748',
               display: '-webkit-box',
               WebkitBoxOrient: 'vertical',
               WebkitLineClamp: 2,
-              overflow: 'hidden'
+              overflow: 'hidden',
+              minHeight: '2.8rem'
             }}
           >
             {manuscript.title}
           </Typography>
 
           {/* Field */}
-          <Typography 
-            variant="body2" 
+          <Box sx={{ mb: 2.5 }}>
+            <Chip
+              label={manuscript.field}
+              size="small"
             sx={{ 
-              mb: 2, 
+                backgroundColor: 'rgba(139, 108, 188, 0.1)',
               color: '#8b6cbc',
               fontWeight: 500,
-              fontSize: '0.875rem'
-            }}
-          >
-            {manuscript.field}
-          </Typography>
-
-          {/* Progress */}
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.8rem' }}>
-                Progress
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
-                {manuscript.completedSections}/{manuscript.sections} sections
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: '100%',
-                height: 4,
-                backgroundColor: '#f0f0f0',
-                borderRadius: 2,
-                overflow: 'hidden'
+                fontSize: '0.8rem',
+                borderRadius: 2
               }}
-            >
-              <Box
-                sx={{
-                  width: `${manuscript.progress}%`,
-                  height: '100%',
-                  backgroundColor: '#8b6cbc',
-                  borderRadius: 2,
-                }}
-              />
-            </Box>
+            />
           </Box>
 
           {/* Team */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.8rem' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
                 Team:
               </Typography>
               <Stack direction="row" spacing={-0.5}>
-                {manuscript.collaborators.slice(0, 3).map((collaborator, index) => (
-                  <Tooltip key={collaborator.id} title={`${collaborator.name} (${collaborator.role})`}>
+                {/* Active Collaborators */}
+                {manuscript.collaborators.slice(0, 2).map((collaborator, index) => (
+                  <Tooltip key={collaborator.id} title={`${collaborator.name} (${collaborator.role}) - Active`}>
                     <Avatar
                       sx={{
-                        width: 24,
-                        height: 24,
-                        fontSize: '0.7rem',
-                        backgroundColor: collaborator.color,
-                        border: '1px solid white',
-                        fontWeight: 600
+                        width: 28,
+                        height: 28,
+                        fontSize: '0.75rem',
+                        backgroundColor: '#8b6cbc',
+                        border: '2px solid white',
+                        fontWeight: 600,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                       }}
                     >
                       {collaborator.avatar}
                     </Avatar>
                   </Tooltip>
                 ))}
-                {manuscript.collaborators.length > 3 && (
+                
+                {/* Pending Invitations - Dull Style */}
+                {manuscript.pendingInvitationsList && manuscript.pendingInvitationsList.length > 0 ? (
+                  manuscript.pendingInvitationsList.slice(0, 1).map((invitation, index) => (
+                    <Tooltip key={`pending-${index}`} title={`${invitation.givenName} ${invitation.familyName} - Invitation Pending`}>
                   <Avatar
                     sx={{
-                      width: 24,
-                      height: 24,
-                      fontSize: '0.6rem',
+                          width: 28,
+                          height: 28,
+                          fontSize: '0.7rem',
                       backgroundColor: '#e0e0e0',
-                      color: '#666',
+                          color: '#999',
+                          border: '2px solid white',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                          opacity: 0.6,
+                          position: 'relative',
+                          fontWeight: 500,
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 2,
+                            right: 2,
+                            width: 6,
+                            height: 6,
+                            backgroundColor: '#f57c00',
+                            borderRadius: '50%',
                       border: '1px solid white'
+                          }
+                        }}
+                      >
+                        {invitation.givenName?.charAt(0)}{invitation.familyName?.charAt(0)}
+                      </Avatar>
+                    </Tooltip>
+                  ))
+                ) : (
+                  manuscript.pendingInvitations > 0 && (
+                    <Tooltip title={`${manuscript.pendingInvitations} pending invitation${manuscript.pendingInvitations > 1 ? 's' : ''}`}>
+                      <Avatar
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          fontSize: '0.7rem',
+                          backgroundColor: '#e0e0e0',
+                          color: '#999',
+                          border: '2px solid white',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                          opacity: 0.6,
+                          position: 'relative',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 2,
+                            right: 2,
+                            width: 6,
+                            height: 6,
+                            backgroundColor: '#f57c00',
+                            borderRadius: '50%',
+                            border: '1px solid white'
+                          }
+                        }}
+                      >
+                        <PendingIcon sx={{ fontSize: '0.8rem' }} />
+                      </Avatar>
+                    </Tooltip>
+                  )
+                )}
+                
+                {/* Show remaining count if more than displayed */}
+                {(manuscript.collaborators.length + manuscript.pendingInvitations) > 3 && (
+                  <Avatar
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      fontSize: '0.7rem',
+                      backgroundColor: '#f5f5f5',
+                      color: '#666',
+                      border: '2px solid white',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                     }}
                   >
-                    +{manuscript.collaborators.length - 3}
+                    +{(manuscript.collaborators.length + manuscript.pendingInvitations) - 3}
                   </Avatar>
                 )}
               </Stack>
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
               {manuscript.lastUpdated}
             </Typography>
           </Box>
         </CardContent>
 
-        <CardActions sx={{ px: 2.5, pb: 2.5, pt: 0, gap: 1 }}>
+        <CardActions sx={{ px: 3, pb: 3, pt: 0, gap: 1.5 }}>
           <Button
             variant="contained"
             size="small"
             startIcon={<EditIcon fontSize="small" />}
             onClick={() => handleEditManuscript(manuscript)}
             sx={{
-              bgcolor: isProposal ? '#f57c00' : '#8b6cbc',
+              bgcolor: '#8b6cbc',
               '&:hover': {
-                bgcolor: isProposal ? '#e65100' : '#7b5ca7',
+                bgcolor: '#7b5ca7',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 4px 12px rgba(139, 108, 188, 0.3)'
               },
               textTransform: 'none',
-              fontSize: '0.8rem'
+              fontSize: '0.85rem',
+              borderRadius: 2,
+              px: 2,
+              py: 1,
+              fontWeight: 600,
+              transition: 'all 0.2s ease'
             }}
           >
             Edit
@@ -1215,14 +1274,20 @@ export default function CollaborativeWriting() {
             startIcon={<GroupsIcon fontSize="small" />}
             onClick={() => handleManageTeam(manuscript)}
             sx={{
-              borderColor: isProposal ? '#f57c00' : '#8b6cbc',
-              color: isProposal ? '#f57c00' : '#8b6cbc',
+              borderColor: '#8b6cbc',
+              color: '#8b6cbc',
               '&:hover': {
-                borderColor: isProposal ? '#f57c00' : '#8b6cbc',
-                backgroundColor: isProposal ? '#f57c0010' : '#8b6cbc10'
+                borderColor: '#8b6cbc',
+                backgroundColor: 'rgba(139, 108, 188, 0.08)',
+                transform: 'translateY(-1px)'
               },
               textTransform: 'none',
-              fontSize: '0.8rem'
+              fontSize: '0.85rem',
+              borderRadius: 2,
+              px: 2,
+              py: 1,
+              fontWeight: 500,
+              transition: 'all 0.2s ease'
             }}
           >
             Team
@@ -1323,129 +1388,228 @@ export default function CollaborativeWriting() {
       {/* Contained content */}
       <Container maxWidth="xl" sx={{ py: 4 }}>
 
-      {/* Professional Statistics Cards */}
-      <Grid container spacing={2.5} sx={{ mb: 4, mt: 2 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper sx={{ 
-            p: 2, 
-            borderRadius: 2,
-            bgcolor: '#8b6cbc',
-            boxShadow: '0 2px 8px rgba(139, 108, 188, 0.2)',
-            border: 'none',
+      {/* Statistics Cards */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 3, 
+        mb: 5,
+        flexWrap: 'wrap',
+        '@media (max-width: 768px)': {
+          flexDirection: 'column'
+        }
+      }}>
+        <Card sx={{ 
+          flex: '1 1 250px',
+          minWidth: '250px',
+          background: 'linear-gradient(135deg, #764ba2 0%, #764ba2 100%)', 
+          color: 'white',
+            height: '100px',
+          borderRadius: 4,
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          cursor: 'pointer',
             position: 'relative',
             overflow: 'hidden',
-            height: '100px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}>
-            <Box sx={{ position: 'absolute', top: -10, right: -10, width: 40, height: 40, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '50%' }} />
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)' }}>
-                Total Manuscripts
-              </Typography>
-              <DescriptionIcon sx={{ fontSize: 18, color: 'white', opacity: 0.9 }} />
+          '&:hover': {
+            transform: 'translateY(-8px)',
+            boxShadow: '0 20px 40px rgba(102, 126, 234, 0.25)'
+          },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+            opacity: 0,
+            transition: 'opacity 0.3s ease'
+          },
+          '&:hover::before': {
+            opacity: 1
+          }
+        }}>
+          <CardContent sx={{ textAlign: 'center', py: 1.5, position: 'relative', overflow: 'hidden' }}>
+            <Box sx={{ 
+              position: 'absolute', 
+              top: -20, 
+              right: -20, 
+              opacity: 0.1, 
+              transform: 'rotate(12deg)' 
+            }}>
+              <DescriptionIcon sx={{ fontSize: 80 }} />
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: 'white', fontSize: '1.75rem' }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.25, letterSpacing: '-1px', fontSize: '1.5rem' }}>
               {stats.totalManuscripts}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', fontSize: '0.7rem' }}>
-              <Box component="span" sx={{ mr: 0.5, fontSize: '0.8rem' }}>📝</Box>
-              All collaborative works
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <DescriptionIcon fontSize="small" />
+              <Typography variant="body2" sx={{ fontWeight: 600, letterSpacing: '0.5px', fontSize: '0.8rem' }}>
+                Total Manuscripts
             </Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper sx={{ 
-            p: 2, 
-            borderRadius: 2,
-            bgcolor: '#8b6cbc',
-            boxShadow: '0 2px 8px rgba(139, 108, 188, 0.2)',
-            border: 'none',
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ 
+          flex: '1 1 250px',
+          minWidth: '250px',
+          background: 'linear-gradient(135deg, #764ba2 0%, #764ba2 100%)', 
+          color: 'white',
+            height: '100px',
+          borderRadius: 4,
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          cursor: 'pointer',
             position: 'relative',
             overflow: 'hidden',
-            height: '100px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}>
-            <Box sx={{ position: 'absolute', top: -10, right: -10, width: 40, height: 40, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '50%' }} />
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)' }}>
+          '&:hover': {
+            transform: 'translateY(-8px)',
+            boxShadow: '0 20px 40px rgba(102, 126, 234, 0.25)'
+          },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+            opacity: 0,
+            transition: 'opacity 0.3s ease'
+          },
+          '&:hover::before': {
+            opacity: 1
+          }
+        }}>
+          <CardContent sx={{ textAlign: 'center', py: 1.5, position: 'relative', overflow: 'hidden' }}>
+            <Box sx={{ 
+              position: 'absolute', 
+              top: -20, 
+              right: -20, 
+              opacity: 0.1, 
+              transform: 'rotate(12deg)' 
+            }}>
+              <AccessTimeIcon sx={{ fontSize: 80 }} />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.25, letterSpacing: '-1px', fontSize: '1.5rem' }}>
+              {stats.inReviewManuscripts}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <AccessTimeIcon fontSize="small" />
+              <Typography variant="body2" sx={{ fontWeight: 600, letterSpacing: '0.5px', fontSize: '0.8rem' }}>
                 In Progress
-              </Typography>
-              <AccessTimeIcon sx={{ fontSize: 18, color: 'white', opacity: 0.9 }} />
+            </Typography>
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: 'white', fontSize: '1.75rem' }}>
-              {stats.inProgress}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', fontSize: '0.7rem' }}>
-              <Box component="span" sx={{ mr: 0.5, fontSize: '0.8rem' }}>⏳</Box>
-              Active manuscripts
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper sx={{ 
-            p: 2, 
-            borderRadius: 2,
-            bgcolor: '#8b6cbc',
-            boxShadow: '0 2px 8px rgba(139, 108, 188, 0.2)',
-            border: 'none',
+          </CardContent>
+        </Card>
+
+        <Card sx={{ 
+          flex: '1 1 250px',
+          minWidth: '250px',
+          background: 'linear-gradient(135deg, #764ba2 0%, #764ba2 100%)',  
+          color: 'white',
+            height: '100px',
+          borderRadius: 4,
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          cursor: 'pointer',
             position: 'relative',
             overflow: 'hidden',
-            height: '100px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}>
-            <Box sx={{ position: 'absolute', top: -10, right: -10, width: 40, height: 40, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '50%' }} />
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)' }}>
-                Under Review
-              </Typography>
-              <VisibilityIcon sx={{ fontSize: 18, color: 'white', opacity: 0.9 }} />
+          '&:hover': {
+            transform: 'translateY(-8px)',
+            boxShadow: '0 20px 40px rgba(102, 126, 234, 0.25)'
+          },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+            opacity: 0,
+            transition: 'opacity 0.3s ease'
+          },
+          '&:hover::before': {
+            opacity: 1
+          }
+        }}>
+          <CardContent sx={{ textAlign: 'center', py: 1.5, position: 'relative', overflow: 'hidden' }}>
+            <Box sx={{ 
+              position: 'absolute', 
+              top: -20, 
+              right: -20, 
+              opacity: 0.1, 
+              transform: 'rotate(12deg)' 
+            }}>
+              <VisibilityIcon sx={{ fontSize: 80 }} />
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: 'white', fontSize: '1.75rem' }}>
-              {stats.underReview}
+            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.25, letterSpacing: '-1px', fontSize: '1.5rem' }}>
+              {stats.publishedManuscripts}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', fontSize: '0.7rem' }}>
-              <Box component="span" sx={{ mr: 0.5, fontSize: '0.8rem' }}>👀</Box>
-              Pending approval
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <VisibilityIcon fontSize="small" />
+              <Typography variant="body2" sx={{ fontWeight: 600, letterSpacing: '0.5px', fontSize: '0.8rem' }}>
+                Published
             </Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper sx={{ 
-            p: 2, 
-            borderRadius: 2,
-            bgcolor: '#8b6cbc',
-            boxShadow: '0 2px 8px rgba(139, 108, 188, 0.2)',
-            border: 'none',
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ 
+          flex: '1 1 250px',
+          minWidth: '250px',
+          background: 'linear-gradient(135deg, #764ba2 0%, #764ba2 100%)', 
+          color: 'white',
+            height: '100px',
+          borderRadius: 4,
+          boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          cursor: 'pointer',
             position: 'relative',
             overflow: 'hidden',
-            height: '100px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}>
-            <Box sx={{ position: 'absolute', top: -10, right: -10, width: 40, height: 40, bgcolor: 'rgba(255,255,255,0.1)', borderRadius: '50%' }} />
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)' }}>
-                Collaborators
-              </Typography>
-              <GroupsIcon sx={{ fontSize: 18, color: 'white', opacity: 0.9 }} />
+          '&:hover': {
+            transform: 'translateY(-8px)',
+            boxShadow: '0 20px 40px rgba(102, 126, 234, 0.25)'
+          },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+            opacity: 0,
+            transition: 'opacity 0.3s ease'
+          },
+          '&:hover::before': {
+            opacity: 1
+          }
+        }}>
+          <CardContent sx={{ textAlign: 'center', py: 1.5, position: 'relative', overflow: 'hidden' }}>
+            <Box sx={{ 
+              position: 'absolute', 
+              top: -20, 
+              right: -20, 
+              opacity: 0.1, 
+              transform: 'rotate(12deg)' 
+            }}>
+              <GroupsIcon sx={{ fontSize: 80 }} />
             </Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: 'white', fontSize: '1.75rem' }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.25, letterSpacing: '-1px', fontSize: '1.5rem' }}>
               {stats.totalCollaborators}
             </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', fontSize: '0.7rem' }}>
-              <Box component="span" sx={{ mr: 0.5, fontSize: '0.8rem' }}>👥</Box>
-              Active team members
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <GroupsIcon fontSize="small" />
+              <Typography variant="body2" sx={{ fontWeight: 600, letterSpacing: '0.5px', fontSize: '0.8rem' }}>
+                Collaborators
             </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
 
       {/* Professional Search and Filters */}
       <Paper sx={{ 
@@ -1695,135 +1859,280 @@ export default function CollaborativeWriting() {
             </Grid>
           ) : (
             <Paper sx={{ 
-              borderRadius: 2, 
-              overflow: 'visible', 
-              boxShadow: '0 1px 3px rgba(0,0,0,0.08)', 
-              border: '1px solid rgba(0,0,0,0.06)' 
+              borderRadius: 3, 
+              overflow: 'hidden', 
+              boxShadow: '0 4px 16px rgba(139, 108, 188, 0.08)', 
+              border: '1px solid rgba(139, 108, 188, 0.12)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #fafbfd 100%)'
             }}>
               <TableContainer>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ backgroundColor: '#8b6cbc' }}>
-                      <TableCell sx={{ fontWeight: 600, color: 'white', borderBottom: 'none', py: 2 }}>Title</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'white', borderBottom: 'none', py: 2 }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'white', borderBottom: 'none', py: 2 }}>Type</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'white', borderBottom: 'none', py: 2 }}>Team</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'white', borderBottom: 'none', py: 2 }}>Progress</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'white', borderBottom: 'none', py: 2 }}>Updated</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'white', borderBottom: 'none', py: 2, textAlign: 'center' }}>Actions</TableCell>
+                    <TableRow sx={{ 
+                      background: 'linear-gradient(135deg, #8b6cbc 0%, #9575d1 100%)',
+                      '& .MuiTableCell-root': {
+                        borderBottom: 'none'
+                      }
+                    }}>
+                      <TableCell sx={{ fontWeight: 600, color: 'white', py: 2.5, fontSize: '0.875rem' }}>
+                        Manuscript Details
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: 'white', py: 2.5, fontSize: '0.875rem' }}>
+                        Status & Type
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: 'white', py: 2.5, fontSize: '0.875rem' }}>
+                        Team
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: 'white', py: 2.5, fontSize: '0.875rem' }}>
+                        Last Updated
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: 'white', py: 2.5, fontSize: '0.875rem', textAlign: 'center' }}>
+                        Actions
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {filteredManuscripts.map((manuscript, index) => {
                       const statusOption = STATUS_OPTIONS.find(s => s.value === manuscript.status);
+                      const isProposal = manuscript.type === 'Proposal';
                       return (
                         <TableRow 
                           key={manuscript.id} 
                           sx={{ 
-                            bgcolor: index % 2 === 0 ? '#fafafa' : 'white',
-                            '&:hover': { backgroundColor: '#f0f0f0' } 
+                            bgcolor: index % 2 === 0 ? 'rgba(139, 108, 188, 0.02)' : 'white',
+                            '&:hover': { 
+                              backgroundColor: 'rgba(139, 108, 188, 0.06)',
+                              transform: 'scale(1.001)',
+                              boxShadow: '0 2px 8px rgba(139, 108, 188, 0.1)'
+                            },
+                            transition: 'all 0.2s ease',
+                            borderBottom: '1px solid rgba(139, 108, 188, 0.08)'
                           }}
                         >
-                          <TableCell sx={{ py: 2, maxWidth: 300 }}>
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#2D3748', mb: 0.5 }}>
-                              {manuscript.title.length > 50 ? `${manuscript.title.slice(0, 50)}...` : manuscript.title}
+                          {/* Manuscript Details */}
+                          <TableCell sx={{ py: 3, maxWidth: 350 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                              {isProposal && (
+                                <Box sx={{
+                                  backgroundColor: '#8b6cbc',
+                                  color: 'white',
+                                  px: 1.5,
+                                  py: 0.5,
+                                  borderRadius: 1,
+                                  fontSize: '0.7rem',
+                                  fontWeight: 600,
+                                  flexShrink: 0
+                                }}>
+                                  PROPOSAL
+                                </Box>
+                              )}
+                              <Box sx={{ minWidth: 0, flex: 1 }}>
+                                <Typography variant="subtitle1" sx={{ 
+                                  fontWeight: 600, 
+                                  color: '#2D3748', 
+                                  mb: 0.5,
+                                  fontSize: '0.95rem',
+                                  lineHeight: 1.3,
+                                  display: '-webkit-box',
+                                  WebkitBoxOrient: 'vertical',
+                                  WebkitLineClamp: 2,
+                                  overflow: 'hidden'
+                                }}>
+                                  {manuscript.title}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {manuscript.field}
-                            </Typography>
+                                <Chip
+                                  label={manuscript.field}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: 'rgba(139, 108, 188, 0.1)',
+                                    color: '#8b6cbc',
+                                    fontWeight: 500,
+                                    fontSize: '0.75rem',
+                                    height: 20,
+                                    borderRadius: 1
+                                  }}
+                                />
+                              </Box>
+                            </Box>
                           </TableCell>
-                          <TableCell sx={{ py: 2 }}>
+
+                          {/* Status & Type */}
+                          <TableCell sx={{ py: 3 }}>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                             <Chip
                               label={manuscript.status}
                               size="small"
                               sx={{
-                                backgroundColor: statusOption?.color,
+                                  backgroundColor: '#8b6cbc',
                                 color: 'white',
                                 fontWeight: 600,
-                                fontSize: '0.7rem'
+                                  fontSize: '0.75rem',
+                                  height: 24,
+                                  borderRadius: 2
                               }}
                             />
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
+                                {manuscript.type}
+                              </Typography>
+                            </Box>
                           </TableCell>
-                          <TableCell sx={{ py: 2 }}>
-                            <Typography variant="body2">{manuscript.type}</Typography>
-                          </TableCell>
-                          <TableCell sx={{ py: 2 }}>
-                            <Stack direction="row" spacing={-0.5}>
-                              {manuscript.collaborators.slice(0, 3).map((collaborator) => (
-                                <Tooltip key={collaborator.id} title={collaborator.name}>
+
+                          {/* Enhanced Team Display */}
+                          <TableCell sx={{ py: 3 }}>
+                            <Stack direction="row" spacing={-0.5} sx={{ alignItems: 'center' }}>
+                              {/* Active Collaborators */}
+                              {manuscript.collaborators.slice(0, 2).map((collaborator, idx) => (
+                                <Tooltip key={collaborator.id} title={`${collaborator.name} (${collaborator.role}) - Active`}>
                                   <Avatar
                                     sx={{
-                                      width: 24,
-                                      height: 24,
-                                      fontSize: '0.7rem',
-                                      backgroundColor: collaborator.color,
-                                      border: '1px solid white'
+                                      width: 28,
+                                      height: 28,
+                                      fontSize: '0.75rem',
+                                      backgroundColor: '#8b6cbc',
+                                      border: '2px solid white',
+                                      fontWeight: 600,
+                                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                      zIndex: 10 - idx
                                     }}
                                   >
                                     {collaborator.avatar}
                                   </Avatar>
                                 </Tooltip>
                               ))}
-                              {manuscript.collaborators.length > 3 && (
+                              
+                              {/* Pending Invitations */}
+                              {manuscript.pendingInvitationsList && manuscript.pendingInvitationsList.length > 0 ? (
+                                manuscript.pendingInvitationsList.slice(0, 1).map((invitation, idx) => (
+                                  <Tooltip key={`pending-${idx}`} title={`${invitation.givenName} ${invitation.familyName} - Invitation Pending`}>
                                 <Avatar
                                   sx={{
-                                    width: 24,
-                                    height: 24,
-                                    fontSize: '0.6rem',
+                                        width: 28,
+                                        height: 28,
+                                        fontSize: '0.7rem',
                                     backgroundColor: '#e0e0e0',
-                                    color: '#666',
+                                        color: '#999',
+                                        border: '2px solid white',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                        opacity: 0.6,
+                                        position: 'relative',
+                                        fontWeight: 500,
+                                        zIndex: 8,
+                                        '&::after': {
+                                          content: '""',
+                                          position: 'absolute',
+                                          top: 2,
+                                          right: 2,
+                                          width: 6,
+                                          height: 6,
+                                          backgroundColor: '#f57c00',
+                                          borderRadius: '50%',
                                     border: '1px solid white'
+                                        }
                                   }}
                                 >
-                                  +{manuscript.collaborators.length - 3}
+                                      {invitation.givenName?.charAt(0)}{invitation.familyName?.charAt(0)}
+                                </Avatar>
+                                  </Tooltip>
+                                ))
+                              ) : (
+                                manuscript.pendingInvitations > 0 && (
+                                  <Tooltip title={`${manuscript.pendingInvitations} pending invitation${manuscript.pendingInvitations > 1 ? 's' : ''}`}>
+                                    <Avatar
+                                sx={{
+                                        width: 28,
+                                        height: 28,
+                                        fontSize: '0.7rem',
+                                        backgroundColor: '#e0e0e0',
+                                        color: '#999',
+                                        border: '2px solid white',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                                        opacity: 0.6,
+                                        position: 'relative',
+                                        zIndex: 8,
+                                        '&::after': {
+                                          content: '""',
+                                          position: 'absolute',
+                                          top: 2,
+                                          right: 2,
+                                          width: 6,
+                                          height: 6,
+                                          backgroundColor: '#f57c00',
+                                          borderRadius: '50%',
+                                          border: '1px solid white'
+                                        }
+                                      }}
+                                    >
+                                      <PendingIcon sx={{ fontSize: '0.8rem' }} />
+                                    </Avatar>
+                                  </Tooltip>
+                                )
+                              )}
+                              
+                              {/* Remaining count */}
+                              {(manuscript.collaborators.length + manuscript.pendingInvitations) > 3 && (
+                                <Avatar
+                                  sx={{
+                                    width: 28,
+                                    height: 28,
+                                    fontSize: '0.7rem',
+                                    backgroundColor: '#f5f5f5',
+                                    color: '#666',
+                                    border: '2px solid white',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                    zIndex: 7
+                                  }}
+                                >
+                                  +{(manuscript.collaborators.length + manuscript.pendingInvitations) - 3}
                                 </Avatar>
                               )}
                             </Stack>
                           </TableCell>
-                          <TableCell sx={{ py: 2 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Box
-                                sx={{
-                                  width: 60,
-                                  height: 4,
-                                  backgroundColor: '#f0f0f0',
-                                  borderRadius: 2,
-                                  overflow: 'hidden'
-                                }}
-                              >
-                                <Box
-                                  sx={{
-                                    width: `${manuscript.progress}%`,
-                                    height: '100%',
-                                    backgroundColor: '#8b6cbc',
-                                    borderRadius: 2
-                                  }}
-                                />
-                              </Box>
-                              <Typography variant="caption" color="text.secondary">
-                                {manuscript.progress}%
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell sx={{ py: 2 }}>
-                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+
+                          {/* Last Updated */}
+                          <TableCell sx={{ py: 3 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ 
+                              fontSize: '0.85rem',
+                              fontWeight: 500
+                            }}>
                               {manuscript.lastUpdated}
                             </Typography>
                           </TableCell>
-                          <TableCell sx={{ py: 2, textAlign: 'center' }}>
+
+                          {/* Actions */}
+                          <TableCell sx={{ py: 3, textAlign: 'center' }}>
+                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleEditManuscript(manuscript)}
+                                title="Edit manuscript"
+                                sx={{ 
+                                  color: '#8b6cbc',
+                                  backgroundColor: 'rgba(139, 108, 188, 0.08)',
+                                  '&:hover': { 
+                                    bgcolor: 'rgba(139, 108, 188, 0.15)',
+                                    transform: 'scale(1.1)'
+                                  },
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
                             <IconButton
                               size="small"
                               onClick={(e) => handleMenuClick(e, manuscript)}
                               title="More actions"
                               sx={{ 
-                                color: '#666',
+                                  color: '#8b6cbc',
                                 '&:hover': { 
-                                  bgcolor: '#8b6cbc10' 
-                                } 
+                                    bgcolor: 'rgba(139, 108, 188, 0.08)',
+                                    transform: 'scale(1.1)'
+                                  },
+                                  transition: 'all 0.2s ease'
                               }}
                             >
                               <MoreVertIcon fontSize="small" />
                             </IconButton>
+                            </Box>
                           </TableCell>
                         </TableRow>
                       );

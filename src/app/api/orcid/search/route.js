@@ -1,134 +1,146 @@
 import { NextResponse } from 'next/server';
-import { searchResearchers, getResearcherDetails, getResearcherEmails } from '../../../../utils/orcidService.js';
-import { getUserId } from '../../../../lib/auth-server.js';
 
-/**
- * Search for researchers using ORCID API
- * GET /api/orcid/search?givenName=John&familyName=Smith&affiliation=University&rows=20&start=0
- * OR GET /api/orcid/search?q=query&rows=20&start=0 (legacy support)
- */
 export async function GET(request) {
   try {
-    // Check authentication
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const { searchParams } = new URL(request.url);
-    
-    // Get structured search parameters
-    const givenName = searchParams.get('givenName');
+    const givenNames = searchParams.get('givenNames');
     const familyName = searchParams.get('familyName');
-    const affiliation = searchParams.get('affiliation');
-    const orcidId = searchParams.get('orcidId');
-    const email = searchParams.get('email');
-    
-    // Legacy query parameter support
-    const query = searchParams.get('q');
-    
-    const rows = parseInt(searchParams.get('rows')) || 20;
-    const start = parseInt(searchParams.get('start')) || 0;
 
-    let searchCriteria;
-    
-    // Determine if using structured search or legacy query
-    if (givenName || familyName || affiliation || orcidId || email) {
-      // Structured search
-      searchCriteria = {
-        givenName,
-        familyName,
-        affiliation,
-        orcidId,
-        email
-      };
-    } else if (query) {
-      // Legacy string search
-      searchCriteria = query;
-    } else {
+    if (!givenNames && !familyName) {
       return NextResponse.json(
-        { error: 'At least one search parameter is required (givenName, familyName, affiliation, orcidId, email, or q)' },
+        { error: 'At least one name parameter is required' },
         { status: 400 }
       );
     }
 
-    // Search ORCID for researchers
-    const results = await searchResearchers(searchCriteria, rows, start);
+    // Build ORCID search query
+    let query = '';
+    if (givenNames) {
+      query += `given-names:${givenNames}`;
+    }
+    if (familyName) {
+      if (query) query += ' AND ';
+      query += `family-name:${familyName}`;
+    }
 
-    if (results.error) {
+    // ORCID Public API search endpoint
+    const orcidSearchUrl = `https://pub.orcid.org/v3.0/search/?q=${encodeURIComponent(query)}&rows=15`;
+    
+    console.log('ORCID Search URL:', orcidSearchUrl);
+
+    const response = await fetch(orcidSearchUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'HospitiumRis/1.0 (https://hospitiumris.com; mailto:support@hospitiumris.com)'
+      },
+      timeout: 10000 // 10 second timeout
+    });
+
+    if (!response.ok) {
+      console.error('ORCID API Error:', response.status, response.statusText);
       return NextResponse.json(
-        { error: results.error },
-        { status: 500 }
+        { error: 'Failed to search ORCID database' },
+        { status: response.status }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: results
-    });
+    const data = await response.json();
+    console.log('ORCID Response:', JSON.stringify(data, null, 2));
 
-  } catch (error) {
-    console.error('Error in ORCID search API:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+    // Transform ORCID data to our format
+    const researchers = await Promise.all(
+      data.result?.map(async (item) => {
+        const orcidId = item['orcid-identifier']?.path;
+        if (!orcidId) return null;
+
+        try {
+          // Fetch detailed profile for each researcher
+          const profileResponse = await fetch(`https://pub.orcid.org/v3.0/${orcidId}/record`, {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'HospitiumRis/1.0 (https://hospitiumris.com; mailto:support@hospitiumris.com)'
+            },
+            timeout: 8000 // 8 second timeout for individual profiles
+          });
+
+          if (!profileResponse.ok) {
+            console.error(`Failed to fetch profile for ${orcidId}:`, profileResponse.status);
+            // Return basic info from search results as fallback
+            return {
+              orcidId: orcidId,
+              givenNames: '',
+              familyName: '',
+              creditName: item['credit-name']?.value || 'Unknown Researcher',
+              affiliations: [],
+              employmentSummary: 'Researcher',
+              profileUrl: `https://orcid.org/${orcidId}`
+            };
+          }
+
+          const profile = await profileResponse.json();
+          
+          // Extract personal details
+          const person = profile.person;
+          const name = person?.name;
+          const givenNames = name?.['given-names']?.value || '';
+          const familyName = name?.['family-name']?.value || '';
+          const creditName = name?.['credit-name']?.value || `${givenNames} ${familyName}`.trim();
+
+          // Extract employment/affiliations
+          const employments = profile.activities?.employments?.['employment-summary'] || [];
+          const educations = profile.activities?.educations?.['education-summary'] || [];
+          
+          const affiliations = [];
+          const roles = [];
+
+          // Process employments
+          employments.forEach(emp => {
+            if (emp.organization?.name) {
+              affiliations.push(emp.organization.name);
+            }
+            if (emp['role-title']) {
+              roles.push(emp['role-title']);
+            }
+          });
+
+          // Process educations if no employments
+          if (affiliations.length === 0) {
+            educations.forEach(edu => {
+              if (edu.organization?.name) {
+                affiliations.push(edu.organization.name);
+              }
+            });
+          }
+
+          return {
+            orcidId: orcidId,
+            givenNames: givenNames,
+            familyName: familyName,
+            creditName: creditName || `${givenNames} ${familyName}`.trim(),
+            affiliations: [...new Set(affiliations)].slice(0, 3), // Remove duplicates, limit to 3
+            employmentSummary: roles[0] || 'Researcher',
+            profileUrl: `https://orcid.org/${orcidId}`
+          };
+        } catch (error) {
+          console.error(`Error fetching profile for ${orcidId}:`, error);
+          return null;
+        }
+      }) || []
     );
-  }
-}
 
-/**
- * Get detailed researcher information by ORCID ID
- * POST /api/orcid/search with { orcidId: "0000-0000-0000-0000" }
- */
-export async function POST(request) {
-  try {
-    // Check authentication
-    const userId = await getUserId();
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const { orcidId, includeEmails = false } = await request.json();
-
-    if (!orcidId) {
-      return NextResponse.json(
-        { error: 'ORCID ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Get detailed researcher information
-    const researcher = await getResearcherDetails(orcidId);
-    
-    // Optionally include email addresses if requested
-    if (includeEmails) {
-      const emails = await getResearcherEmails(orcidId);
-      researcher.emails = emails;
-    }
+    // Filter out null results and limit to 10
+    const validResearchers = researchers.filter(r => r !== null).slice(0, 10);
 
     return NextResponse.json({
       success: true,
-      data: researcher
+      count: validResearchers.length,
+      researchers: validResearchers
     });
 
   } catch (error) {
-    console.error('Error fetching ORCID details:', error);
-    
-    if (error.message === 'Researcher not found') {
-      return NextResponse.json(
-        { error: 'Researcher not found' },
-        { status: 404 }
-      );
-    }
-
+    console.error('ORCID Search Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error during ORCID search' },
       { status: 500 }
     );
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getUserId } from '../../../lib/auth-server.js';
+import { logApiActivity, logDatabaseActivity, logError, getRequestMetadata } from '../../../utils/activityLogger.js';
 
 const prisma = new PrismaClient();
 
@@ -103,6 +104,149 @@ export async function GET(request) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Create new notification
+ * POST /api/notifications
+ */
+export async function POST(request) {
+  const requestMetadata = getRequestMetadata(request);
+  
+  try {
+    await logApiActivity('POST', '/api/notifications', 200, requestMetadata);
+    
+    const body = await request.json();
+    const { 
+      type, 
+      title, 
+      message, 
+      recipientId, 
+      recipientEmail, 
+      recipientRole, 
+      metadata = {} 
+    } = body;
+
+    let targetUserId = recipientId;
+
+    // If recipientRole is provided, find users with that role
+    if (recipientRole && !recipientId) {
+      const users = await prisma.user.findMany({
+        where: {
+          role: recipientRole
+        },
+        select: {
+          id: true,
+          email: true,
+          givenName: true,
+          familyName: true
+        }
+      });
+
+      await logDatabaseActivity('SELECT', 'User', { success: true, count: users.length }, {
+        ...requestMetadata,
+        operation: 'Find users by role',
+        role: recipientRole
+      });
+
+      // Create notifications for all users with the specified role
+      const notifications = [];
+      for (const user of users) {
+        const notification = await prisma.notification.create({
+          data: {
+            type,
+            title,
+            message,
+            userId: user.id,
+            metadata: JSON.stringify(metadata),
+            isRead: false
+          }
+        });
+        notifications.push(notification);
+      }
+
+      await logDatabaseActivity('CREATE', 'Notification', { success: true, count: notifications.length }, {
+        ...requestMetadata,
+        operation: 'Create notifications for role',
+        role: recipientRole,
+        type
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Notifications sent to ${notifications.length} ${recipientRole} users`,
+        notifications
+      });
+    }
+
+    // If recipientEmail is provided, find user by email
+    if (recipientEmail && !targetUserId) {
+      const user = await prisma.user.findUnique({
+        where: { email: recipientEmail },
+        select: { id: true }
+      });
+
+      if (user) {
+        targetUserId = user.id;
+      } else {
+        await logError('User not found for notification', {
+          ...requestMetadata,
+          recipientEmail,
+          type
+        });
+        
+        return NextResponse.json({
+          success: false,
+          error: 'Recipient not found'
+        }, { status: 404 });
+      }
+    }
+
+    if (!targetUserId) {
+      return NextResponse.json({
+        success: false,
+        error: 'No valid recipient specified'
+      }, { status: 400 });
+    }
+
+    // Create the notification
+    const notification = await prisma.notification.create({
+      data: {
+        type,
+        title,
+        message,
+        userId: targetUserId,
+        metadata: JSON.stringify(metadata),
+        isRead: false
+      }
+    });
+
+    await logDatabaseActivity('CREATE', 'Notification', { success: true, count: 1 }, {
+      ...requestMetadata,
+      operation: 'Create notification',
+      recipientId: targetUserId,
+      type
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Notification created successfully',
+      notification
+    });
+
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    
+    await logApiActivity('POST', '/api/notifications', 500, {
+      ...requestMetadata,
+      error: error.message
+    });
+
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to create notification'
+    }, { status: 500 });
   }
 }
 

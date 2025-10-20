@@ -52,6 +52,10 @@ const PasswordStep = dynamic(() => import('../../components/Registration/Passwor
   loading: () => <RegistrationStepSkeleton />
 });
 
+const FoundationAdminStep = dynamic(() => import('../../components/Registration/FoundationAdminStep'), {
+  loading: () => <RegistrationStepSkeleton />
+});
+
 // Loading skeleton component for registration steps
 const RegistrationStepSkeleton = () => (
   <Box sx={{ p: 3, minHeight: 200 }}>
@@ -119,7 +123,6 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [selectedOrcidProfile, setSelectedOrcidProfile] = useState(null);
-  const [skipOrcid, setSkipOrcid] = useState(false);
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -186,7 +189,7 @@ const RegisterPage = () => {
     } else if (accountType === 'RESEARCH_ADMIN') {
       return [...baseSteps, 'ORCID Search', 'Account Details', 'Institution Details', 'Password'];
     } else if (accountType === 'FOUNDATION_ADMIN') {
-      return [...baseSteps, 'ORCID Search', 'Account Details', 'Foundation Details', 'Password'];
+      return [...baseSteps, 'Email & Password'];
     }
     
     return baseSteps;
@@ -250,23 +253,15 @@ const RegisterPage = () => {
     }));
   };
 
-  // Handle skip ORCID
-  const handleSkipOrcid = (shouldSkip) => {
-    setSkipOrcid(shouldSkip);
-    if (shouldSkip) {
-      setSelectedOrcidProfile(null);
-      setFormData(prev => ({
-        ...prev,
-        orcidId: '',
-        orcidGivenNames: '',
-        orcidFamilyName: ''
-      }));
-    }
-  };
 
   // Validation functions
   const validateEmail = (email) => {
     const re = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    return re.test(email);
+  };
+
+  const validateFoundationEmail = (email) => {
+    const re = /^[A-Z0-9._%+-]+@hospitium\.org$/i;
     return re.test(email);
   };
 
@@ -300,13 +295,38 @@ const RegisterPage = () => {
         }
         break;
         
-      case 1: // ORCID Search (for all account types)
-        if (!skipOrcid && !selectedOrcidProfile) {
-          newErrors.orcidSearch = 'Please search for your ORCID profile or skip this step';
+      case 1: 
+        if (accountType === 'FOUNDATION_ADMIN') {
+          // Email & Password validation for Foundation Admins
+          if (!formData.email) {
+            newErrors.email = 'Email is required';
+          } else if (!validateFoundationEmail(formData.email)) {
+            newErrors.email = 'Please enter a valid @hospitium.org email address';
+          }
+          
+          if (!formData.password) {
+            newErrors.password = 'Password is required';
+          } else {
+            const validation = validatePassword(formData.password);
+            if (!validation.isValid) {
+              newErrors.password = 'Password must contain at least 8 characters, including uppercase, lowercase, number, and special character';
+            }
+          }
+          if (!formData.confirmPassword) {
+            newErrors.confirmPassword = 'Please confirm your password';
+          } else if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match';
+          }
+        } else {
+          // ORCID Search validation for RESEARCHER and RESEARCH_ADMIN
+          if (!selectedOrcidProfile) {
+            newErrors.orcidSearch = 'Please search for and select your ORCID profile to continue';
+          }
         }
         break;
         
-      case 2: // Personal/Account Details (all account types)
+      case 2: 
+        // Personal/Account Details for RESEARCHER and RESEARCH_ADMIN only
         if (!formData.givenName.trim()) {
           newErrors.givenName = 'Given name is required';
         }
@@ -319,22 +339,19 @@ const RegisterPage = () => {
           newErrors.email = 'Please enter a valid email address';
         }
         
-        // Additional validation based on account type
-        if (accountType === 'RESEARCHER' || accountType === 'RESEARCH_ADMIN' || accountType === 'FOUNDATION_ADMIN') {
-          // All account types now use the same validation (institution and dates)
-          if (!formData.primaryInstitution.trim()) {
-            newErrors.primaryInstitution = 'Primary institution is required';
-          }
-          if (!formData.startMonth) {
-            newErrors.startMonth = 'Start month is required';
-          }
-          if (!formData.startYear) {
-            newErrors.startYear = 'Start year is required';
-          }
+        // Additional validation for institution and dates
+        if (!formData.primaryInstitution.trim()) {
+          newErrors.primaryInstitution = 'Primary institution is required';
+        }
+        if (!formData.startMonth) {
+          newErrors.startMonth = 'Start month is required';
+        }
+        if (!formData.startYear) {
+          newErrors.startYear = 'Start year is required';
         }
         break;
         
-      case 3: // Institution Details, Foundation Details, or Password
+      case 3: 
         if (accountType === 'RESEARCHER') {
           // Researcher password validation
           if (!formData.password) {
@@ -361,36 +378,24 @@ const RegisterPage = () => {
           if (!formData.institutionCountry) {
             newErrors.institutionCountry = 'Country is required';
           }
-        } else if (accountType === 'FOUNDATION_ADMIN') {
-          // Foundation Admin foundation validation
-          if (!formData.institutionName.trim()) {
-            newErrors.institutionName = 'Institution name is required';
-          }
-          if (!formData.foundationName.trim()) {
-            newErrors.foundationName = 'Foundation name is required';
-          }
-          if (!formData.foundationType) {
-            newErrors.foundationType = 'Foundation type is required';
-          }
-          if (!formData.foundationCountry) {
-            newErrors.foundationCountry = 'Country is required';
-          }
         }
         break;
         
-      case 4: // Password (final step for Research Admins and Foundation Admins)
-        if (!formData.password) {
-          newErrors.password = 'Password is required';
-        } else {
-          const validation = validatePassword(formData.password);
-          if (!validation.isValid) {
-            newErrors.password = 'Password must contain at least 8 characters, including uppercase, lowercase, number, and special character';
+      case 4: // Password (final step for Research Admins only)
+        if (accountType === 'RESEARCH_ADMIN') {
+          if (!formData.password) {
+            newErrors.password = 'Password is required';
+          } else {
+            const validation = validatePassword(formData.password);
+            if (!validation.isValid) {
+              newErrors.password = 'Password must contain at least 8 characters, including uppercase, lowercase, number, and special character';
+            }
           }
-        }
-        if (!formData.confirmPassword) {
-          newErrors.confirmPassword = 'Please confirm your password';
-        } else if (formData.password !== formData.confirmPassword) {
-          newErrors.confirmPassword = 'Passwords do not match';
+          if (!formData.confirmPassword) {
+            newErrors.confirmPassword = 'Please confirm your password';
+          } else if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match';
+          }
         }
         break;
     }
@@ -484,18 +489,26 @@ const RegisterPage = () => {
           const errorKeys = Object.keys(data.errors);
           if (errorKeys.some(key => ['accountType'].includes(key))) {
             setActiveStep(0);
-          } else if (errorKeys.some(key => ['orcidSearch'].includes(key))) {
-            setActiveStep(1);
-          } else if (errorKeys.some(key => ['givenName', 'familyName', 'email', 'confirmEmail', 'primaryInstitution', 'startMonth', 'startYear'].includes(key))) {
-            setActiveStep(2);
-          } else if (errorKeys.some(key => ['institutionName', 'institutionType', 'institutionCountry', 'foundationName', 'foundationType', 'foundationCountry', 'password', 'confirmPassword'].includes(key))) {
-            if (accountType === 'RESEARCHER') {
-              setActiveStep(3);
-            } else {
-              setActiveStep(3); // Institution/Foundation details
+          } else if (accountType === 'FOUNDATION_ADMIN') {
+            // Foundation Admin error mapping - only 2 steps
+            if (errorKeys.some(key => ['email', 'password', 'confirmPassword'].includes(key))) {
+              setActiveStep(1); // Email & Password step for Foundation Admins
             }
-          } else if (errorKeys.some(key => ['password', 'confirmPassword'].includes(key))) {
-            setActiveStep(4);
+          } else {
+            // Researcher and Research Admin error mapping
+            if (errorKeys.some(key => ['orcidSearch'].includes(key))) {
+              setActiveStep(1);
+            } else if (errorKeys.some(key => ['givenName', 'familyName', 'email', 'confirmEmail', 'primaryInstitution', 'startMonth', 'startYear'].includes(key))) {
+              setActiveStep(2);
+            } else if (errorKeys.some(key => ['institutionName', 'institutionType', 'institutionCountry', 'password', 'confirmPassword'].includes(key))) {
+              if (accountType === 'RESEARCHER') {
+                setActiveStep(3); // Password for Researchers
+              } else {
+                setActiveStep(3); // Institution details for Research Admins
+              }
+            } else if (errorKeys.some(key => ['password', 'confirmPassword'].includes(key)) && accountType === 'RESEARCH_ADMIN') {
+              setActiveStep(4); // Password for Research Admins
+            }
           }
         }
         
@@ -522,17 +535,29 @@ const RegisterPage = () => {
           />
         );
 
-      case 1: // ORCID Search (for all account types)
-        return (
-          <OrcidSearchStep 
-            onOrcidSelect={handleOrcidSelect}
-            onSkipOrcid={handleSkipOrcid}
-            selectedOrcidProfile={selectedOrcidProfile}
-            errors={errors}
-          />
-        );
+      case 1: 
+        if (accountType === 'FOUNDATION_ADMIN') {
+          // Foundation Admins use simplified email & password step
+          return (
+            <FoundationAdminStep 
+              formData={formData}
+              onInputChange={handleInputChange}
+              errors={errors}
+            />
+          );
+        } else {
+          // ORCID Search (for RESEARCHER and RESEARCH_ADMIN)
+          return (
+            <OrcidSearchStep 
+              onOrcidSelect={handleOrcidSelect}
+              selectedOrcidProfile={selectedOrcidProfile}
+              errors={errors}
+            />
+          );
+        }
         
-      case 2: // Personal/Account Details
+      case 2: 
+        // Personal/Account Details for RESEARCHER and RESEARCH_ADMIN only
         return (
           <AccountDetailsStep 
             formData={formData}
@@ -544,7 +569,7 @@ const RegisterPage = () => {
           />
         );
 
-      case 3: // Institution Details, Foundation Details, or Password
+      case 3: 
         if (accountType === 'RESEARCHER') {
           // Researchers go straight to password after account details
           return (
@@ -563,10 +588,13 @@ const RegisterPage = () => {
               errors={errors}
             />
           );
-        } else if (accountType === 'FOUNDATION_ADMIN') {
-          // Foundation Admins show foundation details
+        }
+        break;
+
+      case 4: // Password (final step for Research Admins only)
+        if (accountType === 'RESEARCH_ADMIN') {
           return (
-            <FoundationDetailsStep 
+            <PasswordStep 
               formData={formData}
               onInputChange={handleInputChange}
               errors={errors}
@@ -574,15 +602,6 @@ const RegisterPage = () => {
           );
         }
         break;
-
-      case 4: // Password (final step for Research Admins and Foundation Admins)
-        return (
-          <PasswordStep 
-            formData={formData}
-            onInputChange={handleInputChange}
-            errors={errors}
-          />
-        );
 
       default:
         return null;
