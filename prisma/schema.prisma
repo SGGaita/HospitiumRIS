@@ -14,6 +14,7 @@ enum AccountType {
   RESEARCHER
   RESEARCH_ADMIN
   FOUNDATION_ADMIN
+  SUPER_ADMIN
 }
 
 enum UserStatus {

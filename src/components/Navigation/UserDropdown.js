@@ -16,6 +16,7 @@ import {
   AccountCircle as AccountCircleIcon,
   Settings as SettingsIcon,
   Login as LoginIcon,
+  ListAlt as LogsIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/navigation';
@@ -268,6 +269,23 @@ const UserDropdown = () => {
             </ListItemIcon>
             <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>Settings</Typography>
           </MenuItem>
+
+          {/* Admin-only Logs menu item */}
+          {(user?.accountType === 'RESEARCH_ADMIN' || user?.accountType === 'FOUNDATION_ADMIN' || user?.accountType === 'SUPER_ADMIN') && (
+            <MenuItem 
+              onClick={(event) => handleUserMenuItemClick(event, 'logs', '/logs')}
+              sx={{
+                borderRadius: 1,
+                mx: 1,
+                '&:hover': { backgroundColor: 'rgba(139, 108, 188, 0.08)' }
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <LogsIcon sx={{ fontSize: 18, color: '#8b6cbc' }} />
+              </ListItemIcon>
+              <Typography variant="body2" sx={{ fontSize: '0.9rem' }}>Activity Logs</Typography>
+            </MenuItem>
+          )}
         </Box>
 
         {/* Divider */}

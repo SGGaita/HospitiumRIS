@@ -51,6 +51,9 @@ export async function GET(request) {
       case 'FOUNDATION_ADMIN':
         dashboardRoute = '/foundation';
         break;
+      case 'SUPER_ADMIN':
+        dashboardRoute = '/super-admin';
+        break;
     }
 
     // Return user data (same format as login response)

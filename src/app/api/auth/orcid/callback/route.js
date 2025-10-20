@@ -131,16 +131,28 @@ export async function GET(request) {
         case 'FOUNDATION_ADMIN':
           dashboardRoute = '/foundation';
           break;
+        case 'SUPER_ADMIN':
+          dashboardRoute = '/super-admin';
+          break;
       }
 
       // Log successful login
       try {
+        // Get request metadata for consistent IP/UserAgent handling
+        const requestMetadata = {
+          ip: request.headers.get('x-forwarded-for') || 
+              request.headers.get('x-real-ip') || 
+              request.headers.get('x-client-ip') ||
+              '127.0.0.1',
+          userAgent: request.headers.get('user-agent') || 'Unknown'
+        };
+
         await prisma.registrationLog.create({
           data: {
             email: existingUser.email,
             accountType: existingUser.accountType,
-            ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
-            userAgent: request.headers.get('user-agent') || null,
+            ipAddress: requestMetadata.ip,
+            userAgent: requestMetadata.userAgent,
             success: true,
             errorMessage: 'ORCID login successful',
           }

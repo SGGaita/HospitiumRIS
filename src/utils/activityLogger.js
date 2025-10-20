@@ -103,11 +103,50 @@ export const logApiActivity = async (method, endpoint, statusCode, metadata = {}
 
 // Get request metadata helper
 export const getRequestMetadata = (req) => {
+  // Handle Next.js API route requests
+  let ip = 'Unknown';
+  let userAgent = 'Unknown';
+  
+  if (req && typeof req.headers?.get === 'function') {
+    // Next.js 13+ App Router - use headers.get() method
+    ip = req.headers.get('x-forwarded-for') || 
+         req.headers.get('x-real-ip') || 
+         req.headers.get('x-client-ip') ||
+         req.headers.get('cf-connecting-ip') || // Cloudflare
+         req.headers.get('x-cluster-client-ip') ||
+         '127.0.0.1'; // localhost fallback
+    
+    userAgent = req.headers.get('user-agent') || 'Unknown';
+  } else if (req && req.headers) {
+    // Traditional Node.js request object or Next.js Pages API
+    ip = req.headers['x-forwarded-for'] || 
+         req.headers['x-real-ip'] || 
+         req.headers['x-client-ip'] ||
+         req.headers['cf-connecting-ip'] ||
+         req.headers['x-cluster-client-ip'] ||
+         req.connection?.remoteAddress ||
+         req.socket?.remoteAddress ||
+         '127.0.0.1';
+    
+    userAgent = req.headers['user-agent'] || 'Unknown';
+  }
+
+  // Clean up IP address (handle IPv6 localhost and forwarded headers)
+  if (ip) {
+    if (ip.includes(',')) {
+      // x-forwarded-for can contain multiple IPs, take the first one
+      ip = ip.split(',')[0].trim();
+    }
+    if (ip === '::1' || ip === '::ffff:127.0.0.1') {
+      ip = '127.0.0.1'; // Normalize localhost
+    }
+  }
+
   return {
-    ip: req.headers['x-forwarded-for'] || req.connection?.remoteAddress || 'Unknown',
-    userAgent: req.headers['user-agent'] || 'Unknown',
-    method: req.method,
-    url: req.url,
+    ip: ip || 'Unknown',
+    userAgent: userAgent || 'Unknown',
+    method: req?.method || 'Unknown',
+    url: req?.url || 'Unknown',
     timestamp: new Date().toISOString()
   };
 };

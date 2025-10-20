@@ -29,6 +29,28 @@ import Image from 'next/image';
 import { useThemeMode } from '../../components/ThemeProvider';
 import { useAuth } from '../../components/AuthProvider';
 
+// Client-side activity logging helper
+const logClientActivity = (action, data = {}) => {
+  if (typeof window !== 'undefined') {
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      action,
+      page: 'login',
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+      ...data
+    };
+    
+    // Log to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Client Activity Log:', logEntry);
+    }
+    
+    // Could send to analytics service or store locally
+    // For now, just console log for development
+  }
+};
+
 // NoSSR wrapper component to prevent hydration mismatch
 const NoSSR = ({ children, fallback = null }) => {
   const [hasMounted, setHasMounted] = useState(false);
@@ -44,7 +66,7 @@ const NoSSR = ({ children, fallback = null }) => {
   return children;
 };
 
-const LoginPage = () => {
+  const LoginPage = () => {
   const theme = useTheme();
   const router = useRouter();
   const { isDarkMode, isClient } = useThemeMode();
@@ -58,6 +80,11 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [generalError, setGeneralError] = useState('');
+
+  // Log page visit on component mount
+  useEffect(() => {
+    logClientActivity('login_page_visited');
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, checked } = e.target;
@@ -89,8 +116,21 @@ const LoginPage = () => {
       newErrors.password = 'Password must be at least 6 characters';
     }
     
+    const isValid = Object.keys(newErrors).length === 0;
+    
+    // Log validation results
+    if (!isValid) {
+      logClientActivity('form_validation_failed', {
+        errors: Object.keys(newErrors),
+        hasEmail: !!formData.email,
+        hasPassword: !!formData.password
+      });
+    } else {
+      logClientActivity('form_validation_passed');
+    }
+    
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
@@ -101,6 +141,12 @@ const LoginPage = () => {
     setIsLoading(true);
     setGeneralError('');
     setErrors({});
+    
+    // Log login attempt start
+    logClientActivity('login_attempt_started', {
+      email: formData.email.toLowerCase(),
+      rememberMe: formData.rememberMe
+    });
     
     try {
       const response = await fetch('/api/auth/login', {
@@ -119,6 +165,13 @@ const LoginPage = () => {
 
       if (data.success) {
         console.log('Login successful:', data);
+        
+        // Log successful login
+        logClientActivity('login_successful', {
+          email: formData.email.toLowerCase(),
+          accountType: data.user.accountType,
+          dashboardRoute: data.dashboardRoute
+        });
         
         // Update auth context with user data
         await authLogin({
@@ -142,6 +195,14 @@ const LoginPage = () => {
         // Redirect to role-specific dashboard
         router.push(data.dashboardRoute);
       } else {
+        // Log login failure
+        logClientActivity('login_failed', {
+          email: formData.email.toLowerCase(),
+          reason: data.needsActivation ? 'account_not_activated' : 
+                  data.field ? `field_error_${data.field}` : 'general_error',
+          message: data.message
+        });
+        
         // Handle different error scenarios
         if (data.needsActivation) {
           setGeneralError(data.message);
@@ -161,6 +222,14 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Log network/unexpected error
+      logClientActivity('login_error', {
+        email: formData.email.toLowerCase(),
+        error: error.message,
+        type: 'network_error'
+      });
+      
       setGeneralError('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
@@ -168,6 +237,9 @@ const LoginPage = () => {
   };
 
   const handleSocialLogin = (provider) => {
+    // Log social login attempt
+    logClientActivity('social_login_initiated', { provider });
+    
     if (provider === 'ORCID') {
       handleOrcidLogin();
     } else {
@@ -179,6 +251,9 @@ const LoginPage = () => {
   const handleOrcidLogin = () => {
     try {
       console.log('🚀 Initiating ORCID login...');
+      
+      // Log ORCID login attempt start
+      logClientActivity('orcid_login_started');
 
       // Clear any existing errors
       setGeneralError('');
@@ -191,6 +266,11 @@ const LoginPage = () => {
       const orcidUrl = process.env.NEXT_PUBLIC_ORCID_SANDBOX_URL || 'https://sandbox.orcid.org/oauth/authorize';
 
       if (!clientId || !redirectUri) {
+        logClientActivity('orcid_login_error', { 
+          reason: 'missing_config',
+          hasClientId: !!clientId,
+          hasRedirectUri: !!redirectUri
+        });
         setGeneralError('ORCID login is not properly configured. Please contact support.');
         return;
       }
@@ -214,11 +294,24 @@ const LoginPage = () => {
       // Store state in cookie for verification
       document.cookie = `orcid_state=${state}; path=/; max-age=600; secure=${process.env.NODE_ENV === 'production'}; samesite=strict`;
       
+      // Log successful ORCID redirect
+      logClientActivity('orcid_redirect_initiated', {
+        orcidUrl: orcidUrl,
+        scope: scope
+      });
+      
       // Redirect to ORCID
       window.location.href = authUrl;
 
     } catch (error) {
       console.error('❌ ORCID login error:', error);
+      
+      // Log ORCID error
+      logClientActivity('orcid_login_error', {
+        reason: 'redirect_failed',
+        error: error.message
+      });
+      
       setGeneralError('Failed to initiate ORCID login. Please try again.');
     }
   };
@@ -230,12 +323,23 @@ const LoginPage = () => {
     const success = urlParams.get('login');
     
     if (error) {
-      setGeneralError(decodeURIComponent(error));
+      const errorMessage = decodeURIComponent(error);
+      
+      // Log ORCID error from callback
+      logClientActivity('orcid_callback_error', {
+        error: errorMessage
+      });
+      
+      setGeneralError(errorMessage);
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (success === 'success') {
       // This would be handled by redirect, but just in case
       console.log('✅ Login successful via ORCID');
+      
+      // Log ORCID success callback
+      logClientActivity('orcid_callback_success');
+      
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }

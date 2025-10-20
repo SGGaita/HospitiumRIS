@@ -1,20 +1,47 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { logApiActivity, logError, logInfo, logSuccess, getRequestMetadata } from '@/utils/activityLogger';
 
 export async function POST(request) {
+  const requestMetadata = getRequestMetadata(request);
   let requestBody;
+  
   try {
     requestBody = await request.json();
     const { email, password, rememberMe } = requestBody;
 
+    // Log login attempt
+    await logInfo('Login attempt initiated', {
+      ...requestMetadata,
+      email: email?.toLowerCase(),
+      hasPassword: !!password,
+      rememberMe: rememberMe || false
+    });
+
     // Validate input
     if (!email || !password) {
+      const errorField = !email ? 'email' : 'password';
+      const errorMessage = 'Email and password are required';
+      
+      await logError(`Login validation failed: ${errorMessage}`, {
+        ...requestMetadata,
+        email: email?.toLowerCase(),
+        field: errorField,
+        reason: 'missing_credentials'
+      });
+      
+      await logApiActivity('POST', '/api/auth/login', 400, {
+        ...requestMetadata,
+        email: email?.toLowerCase(),
+        error: 'validation_failed'
+      });
+      
       return NextResponse.json(
         { 
           success: false, 
-          message: 'Email and password are required',
-          field: !email ? 'email' : 'password'
+          message: errorMessage,
+          field: errorField
         },
         { status: 400 }
       );
@@ -30,6 +57,18 @@ export async function POST(request) {
     });
 
     if (!user) {
+      await logError('Login failed: User not found', {
+        ...requestMetadata,
+        email: email.toLowerCase(),
+        reason: 'user_not_found'
+      });
+      
+      await logApiActivity('POST', '/api/auth/login', 401, {
+        ...requestMetadata,
+        email: email.toLowerCase(),
+        error: 'invalid_credentials'
+      });
+      
       return NextResponse.json(
         { 
           success: false, 
@@ -42,6 +81,21 @@ export async function POST(request) {
 
     // Check if user is activated
     if (!user.emailVerified) {
+      await logError('Login failed: Account not verified', {
+        ...requestMetadata,
+        userId: user.id,
+        email: user.email,
+        accountType: user.accountType,
+        reason: 'account_not_verified'
+      });
+      
+      await logApiActivity('POST', '/api/auth/login', 403, {
+        ...requestMetadata,
+        userId: user.id,
+        email: user.email,
+        error: 'account_not_verified'
+      });
+      
       return NextResponse.json(
         { 
           success: false, 
@@ -55,6 +109,22 @@ export async function POST(request) {
 
     // Check if user status is active
     if (user.status !== 'ACTIVE') {
+      await logError('Login failed: Account suspended or inactive', {
+        ...requestMetadata,
+        userId: user.id,
+        email: user.email,
+        accountType: user.accountType,
+        userStatus: user.status,
+        reason: 'account_suspended'
+      });
+      
+      await logApiActivity('POST', '/api/auth/login', 403, {
+        ...requestMetadata,
+        userId: user.id,
+        email: user.email,
+        error: 'account_suspended'
+      });
+      
       return NextResponse.json(
         { 
           success: false, 
@@ -67,6 +137,21 @@ export async function POST(request) {
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
+      await logError('Login failed: Invalid password', {
+        ...requestMetadata,
+        userId: user.id,
+        email: user.email,
+        accountType: user.accountType,
+        reason: 'invalid_password'
+      });
+      
+      await logApiActivity('POST', '/api/auth/login', 401, {
+        ...requestMetadata,
+        userId: user.id,
+        email: user.email,
+        error: 'invalid_credentials'
+      });
+      
       return NextResponse.json(
         { 
           success: false, 
@@ -89,6 +174,9 @@ export async function POST(request) {
       case 'FOUNDATION_ADMIN':
         dashboardRoute = '/foundation';
         break;
+      case 'SUPER_ADMIN':
+        dashboardRoute = '/super-admin';
+        break;
     }
 
     // Update last login time
@@ -99,14 +187,33 @@ export async function POST(request) {
       }
     });
 
-    // Log successful login
+    // Log successful login with comprehensive activity logging
+    await logSuccess('User login successful', {
+      ...requestMetadata,
+      userId: user.id,
+      email: user.email,
+      accountType: user.accountType,
+      dashboardRoute,
+      rememberMe: rememberMe || false,
+      loginMethod: 'email_password'
+    });
+
+    await logApiActivity('POST', '/api/auth/login', 200, {
+      ...requestMetadata,
+      userId: user.id,
+      email: user.email,
+      accountType: user.accountType,
+      success: true
+    });
+
+    // Keep existing registration log for backward compatibility
     try {
       await prisma.registrationLog.create({
         data: {
           email: user.email,
           accountType: user.accountType,
-          ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
-          userAgent: request.headers.get('user-agent') || null,
+          ipAddress: requestMetadata.ip || null,
+          userAgent: requestMetadata.userAgent || null,
           success: true,
           errorMessage: 'Login successful',
         }
@@ -163,14 +270,29 @@ export async function POST(request) {
   } catch (error) {
     console.error('Login error:', error);
 
-    // Log failed login attempt
+    // Log unexpected error with comprehensive activity logging
+    await logError('Unexpected login error', {
+      ...requestMetadata,
+      email: requestBody?.email?.toLowerCase(),
+      error: error.message,
+      stack: error.stack,
+      reason: 'unexpected_error'
+    });
+
+    await logApiActivity('POST', '/api/auth/login', 500, {
+      ...requestMetadata,
+      email: requestBody?.email?.toLowerCase(),
+      error: 'internal_server_error'
+    });
+
+    // Keep existing registration log for backward compatibility
     try {
       await prisma.registrationLog.create({
         data: {
           email: requestBody?.email || 'unknown',
           accountType: 'UNKNOWN',
-          ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
-          userAgent: request.headers.get('user-agent') || null,
+          ipAddress: requestMetadata.ip || null,
+          userAgent: requestMetadata.userAgent || null,
           success: false,
           errorMessage: error.message,
         }

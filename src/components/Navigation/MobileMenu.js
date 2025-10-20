@@ -21,6 +21,7 @@ import {
   PersonAdd as PersonAddIcon,
   AccountCircle as AccountCircleIcon,
   Settings as SettingsIcon,
+  ListAlt as LogsIcon,
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { useRouter } from 'next/navigation';
@@ -306,6 +307,18 @@ const MobileMenu = ({ isOpen, onClose, dashboardConfig = null }) => {
                   <ListItemText primary="Dashboard" />
                 </ListItemButton>
               </ListItem>
+
+              {/* Admin-only Activity Logs */}
+              {(user?.accountType === 'RESEARCH_ADMIN' || user?.accountType === 'FOUNDATION_ADMIN' || user?.accountType === 'SUPER_ADMIN') && (
+                <ListItem disablePadding>
+                  <ListItemButton onClick={(event) => handleMenuItemClick(event, '/logs')} sx={{ borderRadius: 1 }}>
+                    <ListItemIcon>
+                      <LogsIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText primary="Activity Logs" />
+                  </ListItemButton>
+                </ListItem>
+              )}
 
               {/* Logout */}
               <ListItem disablePadding>
