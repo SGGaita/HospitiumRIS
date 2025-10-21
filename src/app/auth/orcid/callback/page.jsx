@@ -83,26 +83,80 @@ export default function OrcidCallback() {
         setProcessingStage('Checking user account...');
         setProgress(70);
 
-        // Check if user exists by calling our callback API
-        const callbackResponse = await fetch(`/api/auth/orcid/callback?code=${code}&state=${state || ''}`);
-        
-        if (callbackResponse.redirected) {
-          setProcessingStage('Redirecting...');
-          setProgress(100);
+        // Check if user exists with this ORCID ID directly
+        const userCheckResponse = await fetch('/api/auth/me', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'check_orcid_user',
+            orcidId: tokenData.orcid,
+            orcidData: tokenData
+          }),
+        });
+
+        if (userCheckResponse.ok) {
+          const userData = await userCheckResponse.json();
           
-          // Handle the redirect from the API
-          const redirectUrl = callbackResponse.url;
-          
-          // Small delay for user feedback
-          setTimeout(() => {
-            window.location.href = redirectUrl;
-          }, 500);
-          
-          return;
+          if (userData.userExists) {
+            setProcessingStage('Logging in existing user...');
+            setProgress(90);
+            
+            // User exists - proceed to login
+            const loginResponse = await fetch('/api/auth/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                orcidLogin: true,
+                orcidId: tokenData.orcid,
+                orcidData: tokenData
+              }),
+            });
+
+            if (loginResponse.ok) {
+              const loginData = await loginResponse.json();
+              
+              setProcessingStage('Redirecting to dashboard...');
+              setProgress(100);
+              
+              // Redirect to user's dashboard
+              setTimeout(() => {
+                window.location.href = loginData.dashboardRoute || '/dashboard';
+              }, 500);
+              
+              return;
+            } else {
+              throw new Error('Failed to login with ORCID');
+            }
+          } else {
+            // User doesn't exist - redirect to registration
+            setProcessingStage('Redirecting to registration...');
+            setProgress(90);
+            
+            // Store ORCID data for registration
+            sessionStorage.setItem('orcid_registration_data', JSON.stringify({
+              orcidId: tokenData.orcid,
+              givenNames: tokenData.name?.split(' ')[0] || '',
+              familyName: tokenData.name?.split(' ').slice(1).join(' ') || '',
+              accessToken: tokenData.access_token,
+              scope: tokenData.scope
+            }));
+            
+            setProgress(100);
+            
+            setTimeout(() => {
+              window.location.href = '/register?orcid=true';
+            }, 500);
+            
+            return;
+          }
         }
 
         // If we get here, something went wrong
-        throw new Error('Unexpected response from authentication service');
+        throw new Error('Failed to check user account status');
 
       } catch (err) {
         console.error('ORCID authentication error:', err);

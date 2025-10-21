@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
+import { logInfo, logError, getRequestMetadata } from '@/utils/activityLogger';
 
 export async function GET(request) {
   try {
@@ -81,6 +82,104 @@ export async function GET(request) {
     
   } catch (error) {
     console.error('Get user error:', error);
+    return NextResponse.json(
+      { success: false, message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request) {
+  const requestMetadata = getRequestMetadata(request);
+  
+  try {
+    const { action, orcidId, orcidData } = await request.json();
+
+    if (action === 'check_orcid_user') {
+      // Log ORCID user check request
+      await logInfo('ORCID user check initiated', {
+        ...requestMetadata,
+        orcidId: orcidId,
+        action: 'check_orcid_user'
+      });
+
+      // Check if user exists with this ORCID ID
+      const existingUser = await prisma.user.findFirst({
+        where: { orcidId: orcidId },
+        include: {
+          institution: true,
+          foundation: true,
+        }
+      });
+
+      if (existingUser) {
+        // Check if user is activated and active
+        if (!existingUser.emailVerified || existingUser.status !== 'ACTIVE') {
+          await logError('ORCID user found but account inactive', {
+            ...requestMetadata,
+            userId: existingUser.id,
+            email: existingUser.email,
+            orcidId: orcidId,
+            emailVerified: existingUser.emailVerified,
+            status: existingUser.status
+          });
+          
+          return NextResponse.json({
+            success: false,
+            userExists: true,
+            accountActive: false,
+            message: 'Account found but is inactive or not verified'
+          }, { status: 403 });
+        }
+
+        await logInfo('ORCID user found and active', {
+          ...requestMetadata,
+          userId: existingUser.id,
+          email: existingUser.email,
+          orcidId: orcidId,
+          accountType: existingUser.accountType
+        });
+
+        return NextResponse.json({
+          success: true,
+          userExists: true,
+          accountActive: true,
+          user: {
+            id: existingUser.id,
+            email: existingUser.email,
+            accountType: existingUser.accountType,
+            orcidId: existingUser.orcidId
+          }
+        });
+      } else {
+        await logInfo('ORCID user not found - needs registration', {
+          ...requestMetadata,
+          orcidId: orcidId,
+          orcidName: orcidData?.name
+        });
+
+        return NextResponse.json({
+          success: true,
+          userExists: false,
+          message: 'User not found, registration required'
+        });
+      }
+    }
+
+    return NextResponse.json(
+      { success: false, message: 'Invalid action' },
+      { status: 400 }
+    );
+
+  } catch (error) {
+    console.error('ORCID user check error:', error);
+    
+    await logError('ORCID user check failed', {
+      ...requestMetadata,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return NextResponse.json(
       { success: false, message: 'Internal server error' },
       { status: 500 }

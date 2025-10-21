@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { logSuccess, logError, logInfo, logApiActivity, getRequestMetadata } from '@/utils/activityLogger';
 
 export async function GET(request) {
+  const requestMetadata = getRequestMetadata(request);
+  
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
@@ -9,6 +12,15 @@ export async function GET(request) {
     const error = searchParams.get('error');
 
     console.log('🔥 ORCID API Callback - Processing authentication...');
+    
+    // Log ORCID callback initiation
+    await logInfo('ORCID callback initiated', {
+      ...requestMetadata,
+      hasCode: !!code,
+      hasState: !!state,
+      errorParam: error,
+      endpoint: '/api/auth/orcid/callback'
+    });
 
     // Handle ORCID error responses
     if (error) {
@@ -24,16 +36,50 @@ export async function GET(request) {
       };
       
       const errorMessage = errorMessages[error] || 'An error occurred during ORCID authentication.';
+      
+      // Log ORCID authorization error
+      await logError('ORCID authorization error', {
+        ...requestMetadata,
+        orcidError: error,
+        errorMessage,
+        reason: 'orcid_authorization_error'
+      });
+      
+      await logApiActivity('GET', '/api/auth/orcid/callback', 302, {
+        ...requestMetadata,
+        error: 'orcid_authorization_error',
+        orcidError: error
+      });
+      
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=${encodeURIComponent(errorMessage)}`);
     }
 
     // Validate required parameters
     if (!code) {
       console.error('❌ No authorization code received');
+      
+      // Log missing authorization code
+      await logError('ORCID callback missing authorization code', {
+        ...requestMetadata,
+        reason: 'missing_authorization_code'
+      });
+      
+      await logApiActivity('GET', '/api/auth/orcid/callback', 302, {
+        ...requestMetadata,
+        error: 'missing_authorization_code'
+      });
+      
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=${encodeURIComponent('Authorization code not received from ORCID')}`);
     }
 
     console.log('🔄 Exchanging code for ORCID token...');
+    
+    // Log token exchange initiation
+    await logInfo('ORCID token exchange initiated', {
+      ...requestMetadata,
+      hasCode: !!code,
+      endpoint: '/api/auth/orcid/callback'
+    });
     
     // Exchange code for token directly with ORCID
     const clientId = process.env.NEXT_PUBLIC_ORCID_CLIENT_ID;
@@ -43,6 +89,20 @@ export async function GET(request) {
 
     if (!clientId || !clientSecret) {
       console.error('❌ Missing ORCID credentials');
+      
+      // Log missing ORCID configuration
+      await logError('ORCID configuration missing', {
+        ...requestMetadata,
+        hasClientId: !!clientId,
+        hasClientSecret: !!clientSecret,
+        reason: 'missing_orcid_credentials'
+      });
+      
+      await logApiActivity('GET', '/api/auth/orcid/callback', 302, {
+        ...requestMetadata,
+        error: 'missing_orcid_credentials'
+      });
+      
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=${encodeURIComponent('ORCID authentication is not properly configured')}`);
     }
 
@@ -74,6 +134,21 @@ export async function GET(request) {
 
     if (!tokenResponse.ok) {
       console.error('❌ Token exchange failed:', responseText);
+      
+      // Log token exchange failure
+      await logError('ORCID token exchange failed', {
+        ...requestMetadata,
+        status: tokenResponse.status,
+        response: responseText.substring(0, 200),
+        reason: 'token_exchange_failed'
+      });
+      
+      await logApiActivity('GET', '/api/auth/orcid/callback', 302, {
+        ...requestMetadata,
+        error: 'token_exchange_failed',
+        orcidStatus: tokenResponse.status
+      });
+      
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=${encodeURIComponent('Failed to authenticate with ORCID')}`);
     }
 
@@ -82,6 +157,20 @@ export async function GET(request) {
       orcidData = JSON.parse(responseText);
     } catch (parseError) {
       console.error('❌ Failed to parse ORCID response:', responseText);
+      
+      // Log ORCID response parsing error
+      await logError('ORCID response parsing failed', {
+        ...requestMetadata,
+        parseError: parseError.message,
+        response: responseText.substring(0, 200),
+        reason: 'orcid_response_parse_error'
+      });
+      
+      await logApiActivity('GET', '/api/auth/orcid/callback', 302, {
+        ...requestMetadata,
+        error: 'orcid_response_parse_error'
+      });
+      
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=${encodeURIComponent('Invalid response from ORCID')}`);
     }
 
@@ -89,6 +178,15 @@ export async function GET(request) {
       orcid: orcidData.orcid,
       name: orcidData.name,
       hasToken: !!orcidData.access_token
+    });
+    
+    // Log successful token exchange
+    await logSuccess('ORCID token exchange successful', {
+      ...requestMetadata,
+      orcidId: orcidData.orcid,
+      name: orcidData.name,
+      hasToken: !!orcidData.access_token,
+      endpoint: '/api/auth/orcid/callback'
     });
 
     // Check if user already exists with this ORCID ID
@@ -103,13 +201,56 @@ export async function GET(request) {
     if (existingUser) {
       console.log('✅ Existing ORCID user found:', existingUser.email);
       
+      // Log existing user found
+      await logInfo('ORCID user found - proceeding to login', {
+        ...requestMetadata,
+        userId: existingUser.id,
+        email: existingUser.email,
+        accountType: existingUser.accountType,
+        orcidId: orcidData.orcid,
+        loginMethod: 'orcid'
+      });
+      
       // Check if user is activated
       if (!existingUser.emailVerified) {
+        // Log account not activated
+        await logError('ORCID login failed - account not activated', {
+          ...requestMetadata,
+          userId: existingUser.id,
+          email: existingUser.email,
+          orcidId: orcidData.orcid,
+          reason: 'account_not_activated'
+        });
+        
+        await logApiActivity('GET', '/api/auth/orcid/callback', 302, {
+          ...requestMetadata,
+          userId: existingUser.id,
+          email: existingUser.email,
+          error: 'account_not_activated'
+        });
+        
         return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=${encodeURIComponent('Your account is not activated. Please check your email.')}`);
       }
 
       // Check if user status is active
       if (existingUser.status !== 'ACTIVE') {
+        // Log account suspended
+        await logError('ORCID login failed - account suspended', {
+          ...requestMetadata,
+          userId: existingUser.id,
+          email: existingUser.email,
+          orcidId: orcidData.orcid,
+          userStatus: existingUser.status,
+          reason: 'account_suspended'
+        });
+        
+        await logApiActivity('GET', '/api/auth/orcid/callback', 302, {
+          ...requestMetadata,
+          userId: existingUser.id,
+          email: existingUser.email,
+          error: 'account_suspended'
+        });
+        
         return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=${encodeURIComponent('Your account is suspended or inactive. Please contact support.')}`);
       }
 
@@ -136,17 +277,27 @@ export async function GET(request) {
           break;
       }
 
-      // Log successful login
-      try {
-        // Get request metadata for consistent IP/UserAgent handling
-        const requestMetadata = {
-          ip: request.headers.get('x-forwarded-for') || 
-              request.headers.get('x-real-ip') || 
-              request.headers.get('x-client-ip') ||
-              '127.0.0.1',
-          userAgent: request.headers.get('user-agent') || 'Unknown'
-        };
+      // Log successful ORCID login with comprehensive activity logging
+      await logSuccess('ORCID login successful', {
+        ...requestMetadata,
+        userId: existingUser.id,
+        email: existingUser.email,
+        accountType: existingUser.accountType,
+        orcidId: orcidData.orcid,
+        dashboardRoute,
+        loginMethod: 'orcid'
+      });
+      
+      await logApiActivity('GET', '/api/auth/orcid/callback', 200, {
+        ...requestMetadata,
+        userId: existingUser.id,
+        email: existingUser.email,
+        accountType: existingUser.accountType,
+        success: true
+      });
 
+      // Keep existing registration log for backward compatibility
+      try {
         await prisma.registrationLog.create({
           data: {
             email: existingUser.email,
@@ -177,6 +328,20 @@ export async function GET(request) {
     } else {
       console.log('🔄 No existing user found, redirecting to registration with ORCID data');
       
+      // Log user not found - need to register
+      await logInfo('ORCID user not found - redirecting to registration', {
+        ...requestMetadata,
+        orcidId: orcidData.orcid,
+        name: orcidData.name,
+        reason: 'user_not_found_needs_registration'
+      });
+      
+      await logApiActivity('GET', '/api/auth/orcid/callback', 302, {
+        ...requestMetadata,
+        orcidId: orcidData.orcid,
+        action: 'redirect_to_registration'
+      });
+      
       // Store ORCID data temporarily for registration
       const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/register?orcid=true`);
       
@@ -199,14 +364,27 @@ export async function GET(request) {
   } catch (error) {
     console.error('❌ ORCID callback error:', error);
     
-    // Log failed login attempt
+    // Log unexpected ORCID callback error with comprehensive activity logging
+    await logError('Unexpected ORCID callback error', {
+      ...requestMetadata,
+      error: error.message,
+      stack: error.stack,
+      reason: 'unexpected_orcid_error'
+    });
+    
+    await logApiActivity('GET', '/api/auth/orcid/callback', 500, {
+      ...requestMetadata,
+      error: 'unexpected_orcid_error'
+    });
+    
+    // Keep existing registration log for backward compatibility
     try {
       await prisma.registrationLog.create({
         data: {
           email: 'ORCID_CALLBACK_ERROR',
           accountType: 'UNKNOWN',
-          ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || null,
-          userAgent: request.headers.get('user-agent') || null,
+          ipAddress: requestMetadata.ip || null,
+          userAgent: requestMetadata.userAgent || null,
           success: false,
           errorMessage: `ORCID callback error: ${error.message}`,
         }

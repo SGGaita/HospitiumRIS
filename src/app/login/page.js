@@ -252,12 +252,17 @@ const NoSSR = ({ children, fallback = null }) => {
     try {
       console.log('🚀 Initiating ORCID login...');
       
-      // Log ORCID login attempt start
-      logClientActivity('orcid_login_started');
+      // Log ORCID login attempt start with more details
+      logClientActivity('orcid_login_started', {
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        referrer: document.referrer
+      });
 
       // Clear any existing errors
       setGeneralError('');
       setErrors({});
+      setIsLoading(true); // Show loading state during ORCID flow
 
       // Check for required environment variables
       const clientId = process.env.NEXT_PUBLIC_ORCID_CLIENT_ID;
@@ -265,20 +270,31 @@ const NoSSR = ({ children, fallback = null }) => {
       const scope = process.env.NEXT_PUBLIC_ORCID_SCOPE || '/authenticate';
       const orcidUrl = process.env.NEXT_PUBLIC_ORCID_SANDBOX_URL || 'https://sandbox.orcid.org/oauth/authorize';
 
+      console.log('🔧 ORCID Config Check:', {
+        hasClientId: !!clientId,
+        hasRedirectUri: !!redirectUri,
+        scope,
+        orcidUrl
+      });
+
       if (!clientId || !redirectUri) {
         logClientActivity('orcid_login_error', { 
           reason: 'missing_config',
           hasClientId: !!clientId,
-          hasRedirectUri: !!redirectUri
+          hasRedirectUri: !!redirectUri,
+          scope,
+          orcidUrl
         });
         setGeneralError('ORCID login is not properly configured. Please contact support.');
+        setIsLoading(false);
         return;
       }
 
       // Generate state parameter for CSRF protection
       const state = btoa(JSON.stringify({
         timestamp: Date.now(),
-        random: Math.random().toString(36).substring(7)
+        random: Math.random().toString(36).substring(7),
+        source: 'hospitium_login'
       }));
 
       // Build ORCID authorization URL
@@ -294,11 +310,17 @@ const NoSSR = ({ children, fallback = null }) => {
       // Store state in cookie for verification
       document.cookie = `orcid_state=${state}; path=/; max-age=600; secure=${process.env.NODE_ENV === 'production'}; samesite=strict`;
       
-      // Log successful ORCID redirect
+      // Log successful ORCID redirect with comprehensive data
       logClientActivity('orcid_redirect_initiated', {
         orcidUrl: orcidUrl,
-        scope: scope
+        scope: scope,
+        redirectUri: redirectUri,
+        state: state.substring(0, 20) + '...', // Partial state for logging
+        authUrlLength: authUrl.length
       });
+      
+      // Show user feedback before redirect
+      console.log('🔄 Redirecting to ORCID for authentication...');
       
       // Redirect to ORCID
       window.location.href = authUrl;
@@ -306,28 +328,34 @@ const NoSSR = ({ children, fallback = null }) => {
     } catch (error) {
       console.error('❌ ORCID login error:', error);
       
-      // Log ORCID error
+      // Log detailed ORCID error
       logClientActivity('orcid_login_error', {
         reason: 'redirect_failed',
-        error: error.message
+        error: error.message,
+        stack: error.stack?.substring(0, 200),
+        timestamp: new Date().toISOString()
       });
       
       setGeneralError('Failed to initiate ORCID login. Please try again.');
+      setIsLoading(false);
     }
   };
 
-  // Handle ORCID login errors from URL parameters
+  // Handle ORCID login errors from URL parameters and success callbacks
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     const success = urlParams.get('login');
+    const orcid = urlParams.get('orcid');
     
     if (error) {
       const errorMessage = decodeURIComponent(error);
       
-      // Log ORCID error from callback
+      // Log detailed ORCID error from callback
       logClientActivity('orcid_callback_error', {
-        error: errorMessage
+        error: errorMessage,
+        source: 'url_parameter',
+        wasOrcidFlow: !!orcid
       });
       
       setGeneralError(errorMessage);
@@ -338,8 +366,20 @@ const NoSSR = ({ children, fallback = null }) => {
       console.log('✅ Login successful via ORCID');
       
       // Log ORCID success callback
-      logClientActivity('orcid_callback_success');
+      logClientActivity('orcid_callback_success', {
+        source: 'url_parameter'
+      });
       
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (orcid === 'true') {
+      // User came back from ORCID but was redirected to register
+      logClientActivity('orcid_registration_required', {
+        reason: 'user_not_found',
+        action: 'redirect_to_register'
+      });
+      
+      setGeneralError('ORCID account found, but you need to complete registration first.');
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -527,6 +567,7 @@ const NoSSR = ({ children, fallback = null }) => {
                 variant="outlined"
                 startIcon={<OrcidIcon />}
                 onClick={() => handleSocialLogin('ORCID')}
+                disabled={isLoading}
                 sx={{ 
                   py: 1.5,
                   '& .MuiButton-startIcon': {
@@ -534,7 +575,7 @@ const NoSSR = ({ children, fallback = null }) => {
                   },
                 }}
               >
-                ORCID
+                {isLoading ? 'Connecting to ORCID...' : 'ORCID'}
               </Button>
             </Stack>
 
