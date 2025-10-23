@@ -297,7 +297,10 @@ export default function CollaborativeWriting() {
   const [selectedCollaborator, setSelectedCollaborator] = useState(null);
 
   // Steps for manuscript creation
-  const steps = ['Manuscript Details', 'Invite Collaborators'];
+  const manuscriptSteps = ['Manuscript Details', 'Invite Collaborators'];
+  const [manuscriptActiveStep, setManuscriptActiveStep] = useState(0);
+  const [isSubmittingManuscript, setIsSubmittingManuscript] = useState(false);
+  const [manuscriptFormError, setManuscriptFormError] = useState(null);
 
   // Delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -316,6 +319,7 @@ export default function CollaborativeWriting() {
 
   // Manuscript submission loading
   const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   // New proposal modal state
   const [newProposalOpen, setNewProposalOpen] = useState(false);
@@ -350,8 +354,8 @@ export default function CollaborativeWriting() {
     type: 'Research Proposal',
     fields: [], // Changed from field to fields array
     otherFields: '', // For custom fields when "Other" is selected
-    creator: user?.givenName + ' ' + user?.familyName || '', // Changed from principalInvestigator
-    creatorOrcid: user?.orcidId || '', // Changed from principalInvestigatorOrcid
+    creator: '', // Will be populated when user data is available
+    creatorOrcid: '', // Will be populated when user data is available
     collaborators: [],
     sections: [
       { id: 'section-0-executive-summary', title: 'Executive Summary', description: 'Brief overview of the proposal', order: 0 },
@@ -410,15 +414,16 @@ export default function CollaborativeWriting() {
       const result = await response.json();
       
       if (result.success) {
-        setManuscripts(result.data);
+        setManuscripts(result.manuscripts || []);
         
         // Calculate stats from fetched data
-        const totalManuscripts = result.data.length;
-        const draftManuscripts = result.data.filter(m => m.status === 'DRAFT').length;
-        const inReviewManuscripts = result.data.filter(m => m.status === 'IN_REVIEW').length;
-        const publishedManuscripts = result.data.filter(m => m.status === 'PUBLISHED').length;
-        const totalCollaborators = result.data.reduce((sum, m) => sum + (m.totalCollaborators || 0), 0);
-        const activeInvitations = result.data.reduce((sum, m) => sum + (m.pendingInvitations || 0), 0);
+        const manuscripts = result.manuscripts || [];
+        const totalManuscripts = manuscripts.length;
+        const draftManuscripts = manuscripts.filter(m => m.status === 'DRAFT').length;
+        const inReviewManuscripts = manuscripts.filter(m => m.status === 'IN_REVIEW').length;
+        const publishedManuscripts = manuscripts.filter(m => m.status === 'PUBLISHED').length;
+        const totalCollaborators = manuscripts.reduce((sum, m) => sum + (m.totalCollaborators || 0), 0);
+        const activeInvitations = manuscripts.reduce((sum, m) => sum + (m.pendingInvitations || 0), 0);
         
         setStats({
           totalManuscripts,
@@ -457,10 +462,15 @@ export default function CollaborativeWriting() {
     try {
       const userData = user || JSON.parse(localStorage.getItem('user') || '{}');
       if (userData) {
+        const fullName = userData.name || 
+                        (userData.givenName && userData.familyName ? 
+                         `${userData.givenName} ${userData.familyName}` : 
+                         userData.givenName || userData.familyName || 'Unknown User');
+        
         setNewProposal(prev => ({ 
           ...prev, 
-          creator: userData.name || 'Unknown User',
-          creatorOrcid: userData.orcid || ''
+          creator: fullName,
+          creatorOrcid: userData.orcidId || userData.orcid || ''
         }));
       }
     } catch (error) {
@@ -478,10 +488,15 @@ export default function CollaborativeWriting() {
       try {
         const userData = user || JSON.parse(localStorage.getItem('user') || '{}');
         if (userData) {
+          const fullName = userData.name || 
+                          (userData.givenName && userData.familyName ? 
+                           `${userData.givenName} ${userData.familyName}` : 
+                           userData.givenName || userData.familyName || 'Unknown User');
+          
           setNewProposal(prev => ({
             ...prev,
-            creator: userData.name || 'Unknown User',
-            creatorOrcid: userData.orcid || ''
+            creator: fullName,
+            creatorOrcid: userData.orcidId || userData.orcid || ''
           }));
         }
       } catch (error) {
@@ -504,9 +519,14 @@ export default function CollaborativeWriting() {
           setNewManuscript(prev => ({ ...prev, creator: creatorInfo }));
           
           // Update proposal creator as well
+          const fullName = userData.name || 
+                          (userData.givenName && userData.familyName ? 
+                           `${userData.givenName} ${userData.familyName}` : 
+                           userData.givenName || userData.familyName || 'Unknown User');
+          
           setNewProposal(prev => ({
             ...prev,
-            creator: userData.givenName + ' ' + userData.familyName || userData.name || 'Unknown User',
+            creator: fullName,
             creatorOrcid: userData.orcidId || userData.orcid || ''
           }));
         }
@@ -568,7 +588,8 @@ export default function CollaborativeWriting() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
@@ -618,44 +639,34 @@ export default function CollaborativeWriting() {
     }
   };
 
-  const handleFinishManuscript = () => {
-    // Reset form and close modal since manuscript was already created in step 1
-    setNewManuscript({ 
-      title: '', 
-      type: '', 
-      field: '',
-      fields: [], 
-      description: '',
-      collaborators: [],
-      sections: DEFAULT_SECTIONS.map((title, index) => ({
-        id: `section-${index}-${title.toLowerCase().replace(/\s+/g, '-')}`,
-        title,
-        description: '',
-        order: index
-      }))
-    });
-    setActiveStep(0);
-    setCurrentManuscriptId(null);
-    setNewManuscriptOpen(false);
-    
-    showSnackbar('Manuscript setup complete!', 'success');
-  };
 
-  // Proposal creation functions
-  const handleCreateProposalStep1 = async () => {
+  // Proposal navigation functions
+
+  const handleProposalNextStep = () => {
+    if (proposalActiveStep === 0) {
+      // Proposal details step - validate and move to template selection
     if (!newProposal.title || newProposal.fields.length === 0) {
       setProposalFormError('Please fill in all required fields');
       return;
     }
+      setProposalFormError(null);
+      setProposalActiveStep(1);
+    } else if (proposalActiveStep === 1) {
+      // Template selection step - move to collaborators
+      setProposalActiveStep(2);
+    }
+  };
 
+  const handleFinishProposal = async () => {
     try {
       setIsSubmittingProposal(true);
       setProposalFormError(null);
 
+      // Create the proposal first
       const proposalData = {
         title: newProposal.title,
         type: 'Proposal',
-        field: newProposal.fields.join(', '), // Convert array to comma-separated string
+        field: newProposal.fields.join(', '),
         description: newProposal.description || null
       };
 
@@ -668,39 +679,18 @@ export default function CollaborativeWriting() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
 
-      if (result.success) {
-        // Store the proposal ID for next steps
-        setCurrentProposalId(result.data.manuscript.id);
-        
-        // Move to next step
-        setProposalActiveStep(1);
-        
-        showSnackbar('Proposal created successfully!', 'success');
-      } else {
+      if (!result.success) {
         throw new Error(result.error || 'Failed to create proposal');
       }
-    } catch (error) {
-      console.error('Failed to create proposal:', error);
-      setProposalFormError(error.message || 'An error occurred while creating the proposal');
-    } finally {
-      setIsSubmittingProposal(false);
-    }
-  };
 
-  const handleProposalNextStep = () => {
-    if (proposalActiveStep === 1) {
-      // Template selection step - move to collaborators
-      setProposalActiveStep(2);
-    }
-  };
+      const createdProposalId = result.data.manuscript.id;
 
-  const handleFinishProposal = async () => {
-    try {
       // If there are collaborators to invite, send invitations
       if (newProposal.collaborators.length > 0) {
         for (const collaborator of newProposal.collaborators) {
@@ -711,7 +701,7 @@ export default function CollaborativeWriting() {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                manuscriptId: currentProposalId,
+                manuscriptId: createdProposalId,
                 orcidId: collaborator.orcidId,
                 email: collaborator.email,
                 givenName: collaborator.givenName,
@@ -731,8 +721,8 @@ export default function CollaborativeWriting() {
         type: 'Research Proposal',
         fields: [],
         otherFields: '',
-        creator: user?.givenName + ' ' + user?.familyName || '',
-        creatorOrcid: user?.orcidId || '',
+        creator: '', // Will be populated when modal opens
+        creatorOrcid: '', // Will be populated when modal opens
         collaborators: [],
         sections: [
           { id: 'section-0-executive-summary', title: 'Executive Summary', description: 'Brief overview of the proposal', order: 0 },
@@ -760,13 +750,24 @@ export default function CollaborativeWriting() {
       setSelectedTemplate('blank');
       setNewProposalOpen(false);
       
+      // Log activity (TODO: Implement client-safe logging)
+      console.log('Proposal created:', {
+        manuscriptId: createdProposalId,
+        title: newProposal.title,
+        type: 'Proposal',
+        fields: newProposal.fields,
+        collaboratorsCount: newProposal.collaborators.length
+      });
+      
       // Refresh the manuscripts list to show the new proposal
       await fetchManuscripts();
       
       showSnackbar('Proposal setup complete!', 'success');
     } catch (error) {
       console.error('Error finishing proposal:', error);
-      setProposalFormError('Failed to complete proposal setup');
+      setProposalFormError(error.message || 'Failed to complete proposal setup');
+    } finally {
+      setIsSubmittingProposal(false);
     }
   };
 
@@ -795,7 +796,8 @@ export default function CollaborativeWriting() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
@@ -863,6 +865,218 @@ export default function CollaborativeWriting() {
     
     // Fetch team data
     await fetchTeamData(manuscript.id);
+  };
+
+  // New multi-step manuscript creation functions
+  const handleManuscriptNextStep = () => {
+    if (manuscriptActiveStep === 0) {
+      // Manuscript details step - validate and move to collaborators
+      if (!newManuscript.title || !newManuscript.type || newManuscript.fields.length === 0) {
+        setManuscriptFormError('Please fill in all required fields: Title, Publication Type, and at least one Research Field');
+        return;
+      }
+      setManuscriptFormError(null);
+      setManuscriptActiveStep(1);
+    }
+  };
+
+  const handleFinishManuscript = async () => {
+    try {
+      setIsSubmittingManuscript(true);
+      setManuscriptFormError(null);
+
+      // Create the manuscript first
+      const manuscriptData = {
+        title: newManuscript.title,
+        type: newManuscript.type,
+        field: newManuscript.fields.join(', '), // Convert array to comma-separated string for database
+        description: newManuscript.description || null
+      };
+
+      const response = await fetch('/api/manuscripts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(manuscriptData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create manuscript');
+      }
+
+      const createdManuscriptId = result.data.manuscript.id;
+
+      // If there are collaborators to invite, send invitations
+      if (newManuscript.collaborators.length > 0) {
+        for (const collaborator of newManuscript.collaborators) {
+          if (collaborator.status === 'PENDING' && !collaborator.invitationId) {
+            await fetch('/api/manuscripts/invitations', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                manuscriptId: createdManuscriptId,
+                orcidId: collaborator.orcidId,
+                email: collaborator.email,
+                givenName: collaborator.givenName,
+                familyName: collaborator.familyName,
+                affiliation: collaborator.affiliation,
+                role: collaborator.role || 'CONTRIBUTOR',
+                message: ''
+              }),
+            });
+          }
+        }
+      }
+
+      // Add the new manuscript to local state
+      const newManuscriptData = {
+        ...result.data.manuscript,
+        collaborators: [{
+          id: result.data.manuscript.creator.id,
+          name: `${result.data.manuscript.creator.givenName} ${result.data.manuscript.creator.familyName}`,
+          email: result.data.manuscript.creator.email,
+          role: 'OWNER',
+          canEdit: true,
+          canInvite: true,
+          canDelete: true
+        }],
+        totalCollaborators: 1,
+        pendingInvitations: 0,
+        lastUpdated: result.data.manuscript.updatedAt
+      };
+
+      setManuscripts(prev => [newManuscriptData, ...prev]);
+      setStats(prev => ({ 
+        ...prev, 
+        totalManuscripts: prev.totalManuscripts + 1,
+        draftManuscripts: prev.draftManuscripts + 1,
+        totalCollaborators: prev.totalCollaborators + 1
+      }));
+
+      // Reset form and close modal
+      setNewManuscript({
+        title: '',
+        type: '',
+        field: '',
+        fields: [],
+        description: '',
+        collaborators: []
+      });
+      setManuscriptActiveStep(0);
+      setNewManuscriptOpen(false);
+
+      // Log activity (TODO: Implement client-safe logging)
+      console.log('Manuscript created:', {
+        manuscriptId: createdManuscriptId,
+        title: newManuscript.title,
+        type: newManuscript.type,
+        field: newManuscript.field,
+        collaboratorsCount: newManuscript.collaborators.length
+      });
+
+      // Refresh the manuscripts list to show the new manuscript
+      await fetchManuscripts();
+      
+      showSnackbar('Manuscript created successfully!', 'success');
+      
+    } catch (error) {
+      console.error('Error creating manuscript:', error);
+      setManuscriptFormError(error.message || 'Failed to create manuscript');
+    } finally {
+      setIsSubmittingManuscript(false);
+    }
+  };
+
+  const handleDeleteManuscript = async (manuscript) => {
+    if (window.confirm(`Are you sure you want to delete "${manuscript.title}"? This action cannot be undone.`)) {
+      try {
+        const response = await fetch(`/api/manuscripts/${manuscript.id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          // Remove manuscript from local state
+          setManuscripts(prev => prev.filter(m => m.id !== manuscript.id));
+          
+          // Update stats
+          setStats(prev => ({
+            ...prev,
+            totalManuscripts: prev.totalManuscripts - 1,
+            draftManuscripts: manuscript.status === 'DRAFT' ? prev.draftManuscripts - 1 : prev.draftManuscripts,
+            inReviewManuscripts: manuscript.status === 'IN_REVIEW' ? prev.inReviewManuscripts - 1 : prev.inReviewManuscripts,
+            publishedManuscripts: manuscript.status === 'PUBLISHED' ? prev.publishedManuscripts - 1 : prev.publishedManuscripts
+          }));
+          
+          showSnackbar('Manuscript deleted successfully', 'success');
+        } else {
+          throw new Error('Failed to delete manuscript');
+        }
+      } catch (error) {
+        console.error('Error deleting manuscript:', error);
+        showSnackbar('Failed to delete manuscript', 'error');
+      }
+    }
+  };
+
+  // Helper function to format dates (hydration-safe)
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!isClient) {
+      // Server-side: return simple format to avoid hydration mismatch
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric'
+      });
+    }
+
+    // Client-side: return full relative format
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const dateOptions = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    };
+
+    if (diffDays === 0) {
+      return `Today at ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays === 1) {
+      return `Yesterday at ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`;
+    } else {
+      return date.toLocaleDateString('en-US', dateOptions);
+    }
+  };
+
+  // Helper function to get user initials for avatar
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const nameParts = name.trim().split(' ');
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
   };
 
   // Fetch team data (collaborators and pending invitations)
@@ -1003,11 +1217,59 @@ export default function CollaborativeWriting() {
   };
 
 
-  // Professional Manuscript Card Component
+  // Enhanced Manuscript Card Component
   const ManuscriptCardComponent = ({ manuscript }) => {
     const statusOption = STATUS_OPTIONS.find(s => s.value === manuscript.status);
     const StatusIcon = statusOption?.icon || PendingIcon;
     const isProposal = manuscript.type === 'Proposal';
+
+    // Get all team members including creator and collaborators
+    const allTeamMembers = [];
+    
+    // Add creator if available
+    if (manuscript.creator) {
+      allTeamMembers.push({
+        id: `creator-${manuscript.creator.id || 'unknown'}`,
+        name: manuscript.creator.name || `${manuscript.creator.givenName || ''} ${manuscript.creator.familyName || ''}`.trim(),
+        role: 'Creator',
+        isCreator: true,
+        initials: getInitials(manuscript.creator.name || `${manuscript.creator.givenName || ''} ${manuscript.creator.familyName || ''}`.trim()),
+        isPending: false
+      });
+    }
+
+    // Add collaborators
+    if (manuscript.collaborators && manuscript.collaborators.length > 0) {
+      manuscript.collaborators.forEach(collaborator => {
+        if (!collaborator.isCreator) { // Don't duplicate creator
+          allTeamMembers.push({
+            id: collaborator.id,
+            name: collaborator.name,
+            role: collaborator.role,
+            initials: getInitials(collaborator.name),
+            isPending: false
+          });
+        }
+      });
+    }
+
+    // Add pending invitations
+    if (manuscript.pendingInvitationsList && manuscript.pendingInvitationsList.length > 0) {
+      manuscript.pendingInvitationsList.forEach((invitation, index) => {
+        const name = `${invitation.givenName || ''} ${invitation.familyName || ''}`.trim();
+        allTeamMembers.push({
+          id: `pending-${index}`,
+          name: name || 'Pending User',
+          role: 'Invited',
+          initials: getInitials(name),
+          isPending: true
+        });
+      });
+    }
+
+    // Limit displayed avatars
+    const displayedMembers = allTeamMembers.slice(0, 4);
+    const remainingCount = allTeamMembers.length - displayedMembers.length;
 
     return (
       <Card sx={{
@@ -1045,21 +1307,20 @@ export default function CollaborativeWriting() {
           </Box>
         )}
         
-        <CardContent sx={{ p: 3 }}>
-          {/* Header with status and actions */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <CardContent sx={{ p: 2 }}>
+          {/* Header with status chips */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
               <Chip
-                icon={<StatusIcon sx={{ fontSize: 14 }} />}
+              icon={<StatusIcon sx={{ fontSize: 12 }} />}
                 label={manuscript.status}
                 size="small"
                 sx={{
                   backgroundColor: '#8b6cbc',
                   color: 'white',
                   fontWeight: 600,
-                  fontSize: '0.75rem',
-                  height: 24,
-                  borderRadius: 2
+                fontSize: '0.7rem',
+                height: 20,
+                borderRadius: 1.5
                 }}
               />
               <Chip
@@ -1069,52 +1330,37 @@ export default function CollaborativeWriting() {
                 sx={{ 
                   borderColor: '#8b6cbc', 
                   color: '#8b6cbc',
-                  fontSize: '0.75rem',
-                  height: 24,
+                fontSize: '0.7rem',
+                height: 20,
                   fontWeight: 500,
-                  borderRadius: 2,
+                borderRadius: 1.5,
                   backgroundColor: 'rgba(139, 108, 188, 0.04)'
                 }}
               />
-            </Box>
-            <IconButton
-              size="small"
-              onClick={(e) => handleMenuClick(e, manuscript)}
-              title="More actions"
-              sx={{ 
-                color: '#8b6cbc',
-                '&:hover': { 
-                  bgcolor: 'rgba(139, 108, 188, 0.08)',
-                  transform: 'scale(1.1)'
-                },
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <MoreVertIcon fontSize="small" />
-            </IconButton>
           </Box>
 
           {/* Title */}
           <Typography 
-            variant="h6" 
+            variant="subtitle1" 
             sx={{ 
-              mb: 2, 
-              fontSize: '1.1rem', 
-              lineHeight: 1.4,
+              mb: 1.5, 
+              fontSize: '1rem', 
+              lineHeight: 1.3,
               fontWeight: 600,
               color: '#2D3748',
               display: '-webkit-box',
               WebkitBoxOrient: 'vertical',
               WebkitLineClamp: 2,
               overflow: 'hidden',
-              minHeight: '2.8rem'
+              minHeight: '2.6rem'
             }}
           >
             {manuscript.title}
           </Typography>
 
           {/* Field */}
-          <Box sx={{ mb: 2.5 }}>
+          {manuscript.field && (
+            <Box sx={{ mb: 1.5 }}>
             <Chip
               label={manuscript.field}
               size="small"
@@ -1122,156 +1368,141 @@ export default function CollaborativeWriting() {
                 backgroundColor: 'rgba(139, 108, 188, 0.1)',
               color: '#8b6cbc',
               fontWeight: 500,
-                fontSize: '0.8rem',
-                borderRadius: 2
+                  fontSize: '0.7rem',
+                  height: 18,
+                  borderRadius: 1.5
               }}
             />
           </Box>
+          )}
 
-          {/* Team */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.85rem' }}>
-                Team:
+          {/* Team Avatars */}
+          <Box sx={{ mb: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500, fontSize: '0.75rem' }}>
+                Team ({allTeamMembers.length})
               </Typography>
+              <Tooltip title="Last updated">
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'help' }}>
+                  <Box sx={{ 
+                    width: 4, 
+                    height: 4, 
+                    backgroundColor: '#4caf50', 
+                    borderRadius: '50%' 
+                  }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    {formatDate(manuscript.updatedAt || manuscript.lastUpdated)}
+                  </Typography>
+                </Box>
+              </Tooltip>
+            </Box>
               <Stack direction="row" spacing={-0.5}>
-                {/* Active Collaborators */}
-                {manuscript.collaborators.slice(0, 2).map((collaborator, index) => (
-                  <Tooltip key={collaborator.id} title={`${collaborator.name} (${collaborator.role}) - Active`}>
-                    <Avatar
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        fontSize: '0.75rem',
-                        backgroundColor: '#8b6cbc',
-                        border: '2px solid white',
-                        fontWeight: 600,
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                      }}
-                    >
-                      {collaborator.avatar}
-                    </Avatar>
-                  </Tooltip>
-                ))}
-                
-                {/* Pending Invitations - Dull Style */}
-                {manuscript.pendingInvitationsList && manuscript.pendingInvitationsList.length > 0 ? (
-                  manuscript.pendingInvitationsList.slice(0, 1).map((invitation, index) => (
-                    <Tooltip key={`pending-${index}`} title={`${invitation.givenName} ${invitation.familyName} - Invitation Pending`}>
+              {displayedMembers.map((member) => (
+                <Tooltip 
+                  key={member.id} 
+                  title={`${member.name} (${member.role})${member.isPending ? ' - Invitation Pending' : ''}`}
+                >
                   <Avatar
                     sx={{
-                          width: 28,
-                          height: 28,
-                          fontSize: '0.7rem',
-                      backgroundColor: '#e0e0e0',
-                          color: '#999',
-                          border: '2px solid white',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                          opacity: 0.6,
+                      width: 26,
+                      height: 26,
+                      fontSize: '0.65rem',
+                      backgroundColor: member.isCreator ? '#ff6b35' : member.isPending ? '#e0e0e0' : '#8b6cbc',
+                      color: member.isPending ? '#999' : 'white',
+                      border: '1.5px solid white',
+                      fontWeight: 600,
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      opacity: member.isPending ? 0.7 : 1,
                           position: 'relative',
-                          fontWeight: 500,
+                      ...(member.isPending && {
                           '&::after': {
                             content: '""',
                             position: 'absolute',
-                            top: 2,
-                            right: 2,
+                          top: 0.5,
+                          right: 0.5,
                             width: 6,
                             height: 6,
                             backgroundColor: '#f57c00',
                             borderRadius: '50%',
                       border: '1px solid white'
                           }
+                      })
                         }}
                       >
-                        {invitation.givenName?.charAt(0)}{invitation.familyName?.charAt(0)}
+                    {member.initials}
                       </Avatar>
                     </Tooltip>
-                  ))
-                ) : (
-                  manuscript.pendingInvitations > 0 && (
-                    <Tooltip title={`${manuscript.pendingInvitations} pending invitation${manuscript.pendingInvitations > 1 ? 's' : ''}`}>
-                      <Avatar
-                        sx={{
-                          width: 28,
-                          height: 28,
-                          fontSize: '0.7rem',
-                          backgroundColor: '#e0e0e0',
-                          color: '#999',
-                          border: '2px solid white',
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                          opacity: 0.6,
-                          position: 'relative',
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 2,
-                            right: 2,
-                            width: 6,
-                            height: 6,
-                            backgroundColor: '#f57c00',
-                            borderRadius: '50%',
-                            border: '1px solid white'
-                          }
-                        }}
-                      >
-                        <PendingIcon sx={{ fontSize: '0.8rem' }} />
-                      </Avatar>
-                    </Tooltip>
-                  )
-                )}
-                
-                {/* Show remaining count if more than displayed */}
-                {(manuscript.collaborators.length + manuscript.pendingInvitations) > 3 && (
+              ))}
+              
+              {/* Show remaining count */}
+              {remainingCount > 0 && (
+                <Tooltip title={`+${remainingCount} more team members`}>
                   <Avatar
                     sx={{
-                      width: 28,
-                      height: 28,
-                      fontSize: '0.7rem',
+                      width: 26,
+                      height: 26,
+                      fontSize: '0.6rem',
                       backgroundColor: '#f5f5f5',
                       color: '#666',
-                      border: '2px solid white',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                      border: '1.5px solid white',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      fontWeight: 600
                     }}
                   >
-                    +{(manuscript.collaborators.length + manuscript.pendingInvitations) - 3}
+                    +{remainingCount}
                   </Avatar>
+                </Tooltip>
                 )}
               </Stack>
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
-              {manuscript.lastUpdated}
+
+          {/* Compact Date Info */}
+          <Tooltip title="Created date">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'help' }}>
+              <Box sx={{ 
+                width: 4, 
+                height: 4, 
+                backgroundColor: '#2196f3', 
+                borderRadius: '50%' 
+              }} />
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                Created: {formatDate(manuscript.createdAt)}
             </Typography>
           </Box>
+          </Tooltip>
         </CardContent>
 
-        <CardActions sx={{ px: 3, pb: 3, pt: 0, gap: 1.5 }}>
+        {/* Compact Action Buttons */}
+        <CardActions sx={{ px: 2, pb: 2, pt: 0, gap: 0.5 }}>
           <Button
             variant="contained"
             size="small"
-            startIcon={<EditIcon fontSize="small" />}
+            startIcon={<EditIcon sx={{ fontSize: 14 }} />}
             onClick={() => handleEditManuscript(manuscript)}
             sx={{
               bgcolor: '#8b6cbc',
               '&:hover': {
                 bgcolor: '#7b5ca7',
                 transform: 'translateY(-1px)',
-                boxShadow: '0 4px 12px rgba(139, 108, 188, 0.3)'
+                boxShadow: '0 2px 8px rgba(139, 108, 188, 0.3)'
               },
               textTransform: 'none',
-              fontSize: '0.85rem',
-              borderRadius: 2,
-              px: 2,
-              py: 1,
+              fontSize: '0.7rem',
+              borderRadius: 1.5,
+              px: 1.5,
+              py: 0.5,
+              minWidth: 'auto',
               fontWeight: 600,
               transition: 'all 0.2s ease'
             }}
           >
             Edit
           </Button>
+          
           <Button
             variant="outlined"
             size="small"
-            startIcon={<GroupsIcon fontSize="small" />}
+            startIcon={<GroupsIcon sx={{ fontSize: 14 }} />}
             onClick={() => handleManageTeam(manuscript)}
             sx={{
               borderColor: '#8b6cbc',
@@ -1282,15 +1513,42 @@ export default function CollaborativeWriting() {
                 transform: 'translateY(-1px)'
               },
               textTransform: 'none',
-              fontSize: '0.85rem',
-              borderRadius: 2,
-              px: 2,
-              py: 1,
+              fontSize: '0.7rem',
+              borderRadius: 1.5,
+              px: 1.5,
+              py: 0.5,
+              minWidth: 'auto',
               fontWeight: 500,
               transition: 'all 0.2s ease'
             }}
           >
             Team
+          </Button>
+
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<DeleteIcon sx={{ fontSize: 14 }} />}
+            onClick={() => handleDeleteManuscript(manuscript)}
+            sx={{
+              borderColor: '#f44336',
+              color: '#f44336',
+              '&:hover': {
+                borderColor: '#f44336',
+                backgroundColor: 'rgba(244, 67, 54, 0.08)',
+                transform: 'translateY(-1px)'
+              },
+              textTransform: 'none',
+              fontSize: '0.7rem',
+              borderRadius: 1.5,
+              px: 1.5,
+              py: 0.5,
+              minWidth: 'auto',
+              fontWeight: 500,
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Delete
           </Button>
         </CardActions>
       </Card>
@@ -1362,7 +1620,7 @@ export default function CollaborativeWriting() {
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={() => setNewPublicationOpen(true)}
+                onClick={() => setNewManuscriptOpen(true)}
                 sx={{
                   backgroundColor: 'rgba(255, 255, 255, 0.2)',
                   color: 'white',
@@ -2255,112 +2513,379 @@ export default function CollaborativeWriting() {
       {/* New Manuscript Dialog */}
       <Dialog
         open={newManuscriptOpen}
-        onClose={() => setNewManuscriptOpen(false)}
-        maxWidth="md"
+        onClose={() => {
+          setNewManuscriptOpen(false);
+          setManuscriptActiveStep(0);
+          setManuscriptFormError(null);
+          setNewManuscript({
+            title: '',
+            type: '',
+            field: '',
+            fields: [],
+            description: '',
+            collaborators: []
+          });
+        }}
+        maxWidth="lg"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+            minHeight: '70vh'
+          }
+        }}
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #9575d1 100%)',
+            color: 'white',
+            p: 3
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ 
-              width: 40, 
-              height: 40,
+              width: 48, 
+              height: 48,
               borderRadius: 2,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: '#8b6cbc',
+              backgroundColor: 'rgba(255,255,255,0.2)',
               color: 'white'
             }}>
               <AddIcon />
             </Box>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.25rem' }}>
                 Create New Manuscript
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>
                 Start a new collaborative writing project
               </Typography>
             </Box>
           </Box>
         </DialogTitle>
-        <DialogContent dividers>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Manuscript Title"
-                value={newManuscript.title}
-                onChange={(e) => setNewManuscript(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Enter your manuscript title..."
-                required
+        <DialogContent sx={{ p: 0 }}>
+          {manuscriptFormError && (
+            <Alert severity="error" sx={{ m: 3, mb: 0 }}>
+              {manuscriptFormError}
+            </Alert>
+          )}
+
+          {/* Stepper */}
+          <Box sx={{ px: 3, pt: 3, pb: 2, borderBottom: '1px solid #e0e0e0', backgroundColor: '#fafbfd' }}>
+            <Stepper activeStep={manuscriptActiveStep} sx={{ mb: 2 }}>
+              {manuscriptSteps.map((label) => (
+                <Step key={label}>
+                  <StepLabel 
+                    sx={{
+                      '& .MuiStepLabel-root .Mui-completed': { color: '#8b6cbc' },
+                      '& .MuiStepLabel-root .Mui-active': { color: '#8b6cbc' },
+                    }}
+                  >
+                    {label}
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          </Box>
+
+          {/* Step Content */}
+          {manuscriptActiveStep === 0 && (
+            <Box sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: '#2D3748' }}>
+                Manuscript Details
+              </Typography>
+              
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {/* Manuscript Title */}
+                <TextField
+                  fullWidth
+                  label="Manuscript Title *"
+                  value={newManuscript.title}
+                  onChange={(e) => setNewManuscript(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Enter a descriptive title for your manuscript..."
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': { borderColor: '#8b6cbc' },
+                      '&.Mui-focused fieldset': { borderColor: '#8b6cbc' },
+                    },
+                  }}
+                />
+
+                {/* Publication Type */}
+                <FormControl fullWidth required>
+                  <InputLabel sx={{ '&.Mui-focused': { color: '#8b6cbc' } }}>Publication Type *</InputLabel>
+                  <Select
+                    value={newManuscript.type}
+                    label="Publication Type *"
+                    onChange={(e) => setNewManuscript(prev => ({ ...prev, type: e.target.value }))}
+                    sx={{
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#8b6cbc' },
+                    }}
+                  >
+                    {PUBLICATION_TYPES.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {/* Research Fields - Multiple Selection Dropdown with Custom Entry */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                    Research Fields * (Select multiple or add custom)
+                  </Typography>
+                  
+                  <Autocomplete
+                    multiple
+                    freeSolo
+                    value={newManuscript.fields}
+                    onChange={(event, newValue) => {
+                      // Handle both predefined selections and custom entries
+                      const processedValues = newValue.map(value => 
+                        typeof value === 'string' ? value.trim() : value
+                      ).filter(value => value !== ''); // Remove empty strings
+                      
+                      setNewManuscript(prev => ({
+                        ...prev,
+                        fields: processedValues
+                      }));
+                    }}
+                    options={MEDICAL_FIELDS.filter(field => field !== 'Other')}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => (
+                        <Chip
+                          variant="filled"
+                          label={option}
+                          {...getTagProps({ index })}
+                          key={`${option}-${index}`}
+                          sx={{
+                            backgroundColor: '#8b6cbc',
+                            color: 'white',
+                            '& .MuiChip-deleteIcon': {
+                              color: 'rgba(255, 255, 255, 0.7)',
+                              '&:hover': { color: 'white' }
+                            }
+                          }}
+                        />
+                      ))
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        variant="outlined"
+                        placeholder="Select existing fields or type custom ones..."
+                        helperText="Type and press Enter to add custom fields, or select from dropdown"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': { borderColor: '#8b6cbc' },
+                            '&.Mui-focused fieldset': { borderColor: '#8b6cbc' },
+                          },
+                          '& .MuiFormLabel-root.Mui-focused': { color: '#8b6cbc' }
+                        }}
+                      />
+                    )}
+                    renderOption={(props, option) => {
+                      const { key, ...otherProps } = props;
+                      return (
+                        <Box component="li" key={key} {...otherProps}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ScienceIcon sx={{ fontSize: 16, color: '#8b6cbc' }} />
+                            <Typography variant="body2">{option}</Typography>
+                          </Box>
+                        </Box>
+                      );
+                    }}
+                    sx={{
+                      '& .MuiAutocomplete-tag': {
+                        margin: '2px',
+                      },
+                      '& .MuiAutocomplete-inputRoot': {
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
+                      }
+                    }}
+                    ChipProps={{
+                      sx: {
+                        backgroundColor: '#8b6cbc',
+                        color: 'white',
+                        '& .MuiChip-deleteIcon': {
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          '&:hover': { color: 'white' }
+                        }
+                      }
+                    }}
+                  />
+                  
+                  {/* Information about custom fields */}
+                  {newManuscript.fields.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <CategoryIcon sx={{ fontSize: 14 }} />
+                        {newManuscript.fields.length} field{newManuscript.fields.length !== 1 ? 's' : ''} selected
+                        {newManuscript.fields.some(field => !MEDICAL_FIELDS.includes(field)) && (
+                          <Chip 
+                            label="Custom fields included" 
+                            size="small" 
+                            variant="outlined"
+                            sx={{ 
+                              ml: 1, 
+                              height: 18, 
+                              fontSize: '0.65rem',
+                              borderColor: '#8b6cbc',
+                              color: '#8b6cbc'
+                            }} 
+                          />
+                        )}
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Description */}
+                <TextField
+                  fullWidth
+                  label="Description (Optional)"
+                  value={newManuscript.description}
+                  onChange={(e) => setNewManuscript(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Briefly describe your manuscript objectives, methodology, or key themes..."
+                  multiline
+                  rows={3}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': { borderColor: '#8b6cbc' },
+                      '&.Mui-focused fieldset': { borderColor: '#8b6cbc' },
+                    },
+                  }}
+                />
+              </Box>
+            </Box>
+          )}
+
+          {/* Step 2: Invite Collaborators */}
+          {manuscriptActiveStep === 1 && (
+            <Box sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600, color: '#2D3748' }}>
+                Invite Collaborators
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Add team members to your manuscript using their ORCID IDs or by searching their names.
+              </Typography>
+              
+              {/* ORCID Collaborator Invite Component */}
+              <OrcidCollaboratorInvite
+                manuscriptId={null}
+                collaborators={newManuscript.collaborators}
+                onCollaboratorsChange={(updatedCollaborators) => {
+                  setNewManuscript(prev => ({
+                    ...prev,
+                    collaborators: updatedCollaborators
+                  }));
+                }}
               />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth required>
-                <InputLabel>Publication Type</InputLabel>
-                <Select
-                  value={newManuscript.type}
-                  label="Publication Type"
-                  onChange={(e) => setNewManuscript(prev => ({ ...prev, type: e.target.value }))}
-                >
-                  {PUBLICATION_TYPES.map((type) => (
-                    <MenuItem key={type} value={type}>
-                      {type}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControl fullWidth required>
-                <InputLabel>Medical Field</InputLabel>
-                <Select
-                  value={newManuscript.field}
-                  label="Medical Field"
-                  onChange={(e) => setNewManuscript(prev => ({ ...prev, field: e.target.value }))}
-                >
-                  {MEDICAL_FIELDS.map((field) => (
-                    <MenuItem key={field} value={field}>
-                      {field}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Description (Optional)"
-                value={newManuscript.description}
-                onChange={(e) => setNewManuscript(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Briefly describe your manuscript..."
-                multiline
-                rows={3}
-              />
-            </Grid>
-          </Grid>
+            </Box>
+          )}
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button
-            onClick={() => setNewManuscriptOpen(false)}
-            color="inherit"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreateManuscript}
-            variant="contained"
-            disabled={!newManuscript.title || !newManuscript.type || !newManuscript.field || loading}
-            startIcon={loading ? <CircularProgress size={20} color="inherit" /> : null}
+
+        <DialogActions sx={{ p: 3, gap: 2, borderTop: '1px solid #e0e0e0', backgroundColor: '#fafbfd' }}>
+          <Button 
+            onClick={() => {
+            setNewManuscriptOpen(false);
+            setManuscriptActiveStep(0);
+            setManuscriptFormError(null);
+            setNewManuscript({
+              title: '',
+              type: '',
+              field: '',
+              fields: [],
+              description: '',
+              collaborators: []
+            });
+            }}
             sx={{
-              background: 'linear-gradient(135deg, #8b6cbc, #7b5ca7)',
+              color: '#666',
               '&:hover': {
-                background: 'linear-gradient(135deg, #7b5ca7, #6b4c97)',
+                backgroundColor: 'rgba(0,0,0,0.04)'
               }
             }}
           >
-            {loading ? 'Creating...' : 'Create Manuscript'}
+            Cancel
           </Button>
+          
+          <Box sx={{ flex: 1 }} />
+          
+          {manuscriptActiveStep > 0 && (
+            <Button 
+              onClick={() => setManuscriptActiveStep(prev => prev - 1)}
+              variant="outlined"
+              sx={{
+                borderColor: '#8b6cbc',
+                color: '#8b6cbc',
+                '&:hover': {
+                  borderColor: '#8b6cbc',
+                  backgroundColor: 'rgba(139, 108, 188, 0.08)'
+                }
+              }}
+            >
+              <ArrowBackIcon sx={{ mr: 1, fontSize: 18 }} />
+              Back
+            </Button>
+          )}
+          
+          {manuscriptActiveStep === 0 ? (
+          <Button
+            variant="contained"
+              disabled={!newManuscript.title || !newManuscript.type || newManuscript.fields.length === 0}
+              onClick={handleManuscriptNextStep}
+              sx={{ 
+                background: 'linear-gradient(135deg, #8b6cbc 0%, #9575d1 100%)',
+                px: 3,
+                py: 1,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #7b5ca7 0%, #8565c1 100%)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(139, 108, 188, 0.3)'
+                },
+                '&:disabled': {
+                  background: '#e0e0e0',
+                  color: '#999'
+                },
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Continue to Collaborators
+              <ArrowForwardIcon sx={{ ml: 1, fontSize: 18 }} />
+          </Button>
+          ) : (
+            <Button
+              variant="contained"
+              disabled={isSubmittingManuscript}
+              startIcon={isSubmittingManuscript ? <CircularProgress size={20} color="inherit" /> : <RocketLaunchIcon />}
+              onClick={handleFinishManuscript}
+              sx={{ 
+                background: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)',
+                px: 3,
+                py: 1,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #43a047 0%, #5cb85c 100%)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+                },
+                '&:disabled': {
+                  background: '#e0e0e0',
+                  color: '#999'
+                },
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {isSubmittingManuscript ? 'Creating Manuscript...' : 'Create & Send Invites'}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -2524,15 +3049,15 @@ export default function CollaborativeWriting() {
                                 <Box sx={{ mt: 0.5 }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                           <RoleIcon sx={{ fontSize: 16, color: role?.color }} />
-                          <Typography variant="caption" sx={{ color: role?.color, fontWeight: 600 }}>
+                          <Typography variant="caption" sx={{ color: role?.color, fontWeight: 600 }} component="span">
                             {collaborator.role}
                           </Typography>
                                   </Box>
-                                  <Typography variant="caption" color="textSecondary">
+                                  <Typography variant="caption" color="textSecondary" component="span" sx={{ display: 'block' }}>
                                     {collaborator.user.email}
                                   </Typography>
                                   {collaborator.user.primaryInstitution && (
-                                    <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
+                                    <Typography variant="caption" color="textSecondary" component="span" sx={{ display: 'block' }}>
                                       {collaborator.user.primaryInstitution}
                                     </Typography>
                                   )}
@@ -2596,7 +3121,7 @@ export default function CollaborativeWriting() {
                             }
                             secondary={
                               <Box sx={{ mt: 0.5 }}>
-                                <Typography variant="caption" color="textSecondary">
+                                <Typography variant="caption" color="textSecondary" component="span" sx={{ display: 'block' }}>
                                   {invitation.email}
                                 </Typography>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
@@ -2605,7 +3130,7 @@ export default function CollaborativeWriting() {
                                     size="small" 
                                     sx={{ fontSize: '0.7rem', height: 20 }}
                                   />
-                                  <Typography variant="caption" color="textSecondary">
+                                  <Typography variant="caption" color="textSecondary" component="span">
                                     Invited {new Date(invitation.createdAt).toLocaleDateString()}
                                   </Typography>
                                 </Box>
@@ -2851,7 +3376,7 @@ export default function CollaborativeWriting() {
               },
             }}
           >
-            {steps.map((label, index) => (
+            {manuscriptSteps.map((label, index) => (
               <Step key={label}>
                 <StepLabel>{label}</StepLabel>
               </Step>
@@ -3052,8 +3577,8 @@ export default function CollaborativeWriting() {
             type: 'Research Proposal',
             fields: [],
             otherFields: '',
-            creator: user?.givenName + ' ' + user?.familyName || '',
-            creatorOrcid: user?.orcidId || '',
+            creator: '', // Will be populated when modal opens
+            creatorOrcid: '', // Will be populated when modal opens
             collaborators: [],
             sections: [
               { id: 'section-0-executive-summary', title: 'Executive Summary', description: 'Brief overview of the proposal', order: 0 },
@@ -3333,8 +3858,8 @@ export default function CollaborativeWriting() {
                 type: 'Research Proposal',
                 fields: [],
                 otherFields: '',
-              creator: user?.givenName + ' ' + user?.familyName || '',
-              creatorOrcid: user?.orcidId || '',
+                creator: '', // Will be populated when modal opens
+                creatorOrcid: '', // Will be populated when modal opens
                 collaborators: [],
               sections: [
                 { id: 'section-0-executive-summary', title: 'Executive Summary', description: 'Brief overview of the proposal', order: 0 },
@@ -3372,12 +3897,11 @@ export default function CollaborativeWriting() {
           {proposalActiveStep === 0 ? (
             <Button
               variant="contained"
-              disabled={!newProposal.title || newProposal.fields.length === 0 || isSubmittingProposal}
-              startIcon={isSubmittingProposal ? <CircularProgress size={20} color="inherit" /> : null}
-              onClick={handleCreateProposalStep1}
+              disabled={!newProposal.title || newProposal.fields.length === 0}
+              onClick={handleProposalNextStep}
               sx={{ background: 'linear-gradient(135deg, #8b6cbc 0%, #9575d1 100%)' }}
             >
-              {isSubmittingProposal ? 'Creating...' : 'Create & Continue'}
+              Continue
           </Button>
           ) : proposalActiveStep === 1 ? (
             <Button
@@ -3390,11 +3914,12 @@ export default function CollaborativeWriting() {
           ) : (
             <Button
               variant="contained"
-              startIcon={<CheckIcon />}
+              disabled={isSubmittingProposal}
+              startIcon={isSubmittingProposal ? <CircularProgress size={20} color="inherit" /> : <CheckIcon />}
               onClick={handleFinishProposal}
               sx={{ background: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)' }}
             >
-              Finish
+              {isSubmittingProposal ? 'Creating Proposal...' : 'Finish'}
             </Button>
           )}
         </DialogActions>

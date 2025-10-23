@@ -632,38 +632,6 @@ export default function OrcidCollaboratorInvite({
                 </Alert>
               )}
 
-              <Box 
-                sx={{ 
-                  pt: 2, 
-                  borderTop: '1px solid',
-                  borderColor: 'divider',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 2,
-                }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Don't have an ORCID?
-                </Typography>
-                <Button
-                  variant="outlined"
-                  href="https://orcid.org/register"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  size="small"
-                  sx={{
-                    borderColor: '#A6CE39',
-                    color: '#A6CE39',
-                    '&:hover': {
-                      borderColor: '#96bc34',
-                      backgroundColor: 'rgba(166, 206, 57, 0.1)',
-                    },
-                  }}
-                >
-                  Register for ORCID
-                </Button>
-              </Box>
             </Box>
           )}
         </DialogContent>

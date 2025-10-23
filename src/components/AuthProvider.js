@@ -112,21 +112,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = async (options = {}) => {
     try {
       // Call logout endpoint to clear server-side session cookie
       try {
         await fetch('/api/auth/logout', {
           method: 'POST',
           credentials: 'include', // Include cookies for server-side session clearing
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            preserveRememberMe: options.preserveRememberMe || false
+          })
         });
       } catch (error) {
         console.error('Logout API error:', error);
         // Continue with local logout even if API fails
       }
       
-      // Clear auth data
-      clearAuthData();
+      // Clear auth data (but optionally preserve remember me preference)
+      clearAuthData(options.preserveRememberMe);
       
       return { success: true };
     } catch (error) {
@@ -137,9 +143,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const clearAuthData = () => {
+  const clearAuthData = (preserveRememberMe = false) => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('hospitium_user');
+      // Only clear remember me preference if explicitly requested
+      if (!preserveRememberMe) {
+        // Note: We usually want to preserve the remember me preference
+        // so users don't have to check it again next time they login
+      }
     }
     setUser(null);
     setIsAuthenticated(false);

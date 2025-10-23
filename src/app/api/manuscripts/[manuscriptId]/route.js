@@ -113,6 +113,7 @@ export async function GET(request, { params }) {
   }
 }
 
+
 /**
  * Update a specific manuscript
  * PATCH /api/manuscripts/[manuscriptId]

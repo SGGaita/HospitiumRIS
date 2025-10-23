@@ -164,19 +164,25 @@ const KenyaNetworkVisualization = () => {
           throw new Error("Invalid network data structure");
         }
         
-        // Store publications separately
+        // Store publications and manuscripts separately
         setPublications(data.publications || []);
+        const manuscripts = data.manuscripts || [];
         
-        // Process network data
-        const processedData = processNetworkData(data);
+        // Process network data with enhanced manuscript support
+        const processedData = processNetworkData(data, manuscripts);
         setNetworkData(processedData);
         
-        // Calculate and set graph statistics
+        // Calculate and set enhanced graph statistics
+        const totalPublications = data.metadata?.total_publications || 0;
+        const totalManuscripts = data.metadata?.total_manuscripts || 0;
         const stats = {
           totalNodes: processedData.nodes.length,
           totalLinks: processedData.links.length,
           directCollaborators: processedData.nodes.filter(n => n.collaborationLevel === 'direct').length,
-          secondaryCollaborators: processedData.nodes.filter(n => n.collaborationLevel === 'secondary').length
+          secondaryCollaborators: processedData.nodes.filter(n => n.collaborationLevel === 'secondary').length,
+          totalPublications: totalPublications,
+          totalManuscripts: totalManuscripts,
+          totalOutputs: totalPublications + totalManuscripts
         };
         setGraphStats(stats);
         
@@ -202,7 +208,7 @@ const KenyaNetworkVisualization = () => {
   }, [user]);
 
   // Process network data to create graph structure
-  const processNetworkData = (data) => {
+  const processNetworkData = (data, manuscripts = []) => {
     if (!data || !data.authors) {
       return { nodes: [], links: [] };
     }
@@ -223,13 +229,27 @@ const KenyaNetworkVisualization = () => {
       
       // Find publications with this author
       const authorPublications = data.publications?.filter(pub => 
-        pub.co_authors.includes(author.author_id)
+        pub.co_authors && pub.co_authors.includes(author.author_id)
+      ) || [];
+      
+      // Find manuscripts with this author
+      const authorManuscripts = manuscripts?.filter(manuscript => 
+        manuscript.collaborators && manuscript.collaborators.includes(author.author_id)
       ) || [];
       
       // Find publications co-authored with lead
       const publicationsWithLead = authorPublications.filter(pub => 
-        pub.co_authors.includes(data.lead_investigator_id)
+        pub.co_authors && pub.co_authors.includes(data.lead_investigator_id)
       );
+
+      // Find manuscripts co-authored with lead
+      const manuscriptsWithLead = authorManuscripts.filter(manuscript => 
+        manuscript.collaborators && manuscript.collaborators.includes(data.lead_investigator_id)
+      );
+
+      // Enhanced node sizing based on both publications and manuscripts (max 50px radius)
+      const totalOutputs = (author.publications_count || 0) + (author.manuscripts_count || 0);
+      const nodeSize = Math.max(20, Math.min(50, 20 + totalOutputs * 2)); // Larger nodes, max 50px
       
       return {
         id: author.author_id,
@@ -237,12 +257,18 @@ const KenyaNetworkVisualization = () => {
         specialization: author.specialization,
         institution: author.institution,
         role: author.role,
-        val: Math.max(1, author.publications_count / 8), // Better scaling for node size
+        val: nodeSize,
         isLead,
         collaborationLevel,
-        publications_count: author.publications_count,
+        publications_count: author.publications_count || 0,
+        manuscripts_count: author.manuscripts_count || 0,
+        total_collaborations: author.total_collaborations || 0,
         collaborations: author.collaborations || [],
-        publicationsWithLead: publicationsWithLead.map(p => p.pub_id)
+        collaboration_types: author.collaboration_types || { publications: [], manuscripts: [] },
+        publicationsWithLead: publicationsWithLead.map(p => p.pub_id),
+        manuscriptsWithLead: manuscriptsWithLead.map(m => m.manuscript_id),
+        totalOutputs: totalOutputs,
+        isPending: author.isPending || false
       };
     });
 
@@ -299,9 +325,9 @@ const KenyaNetworkVisualization = () => {
   useEffect(() => {
     if (networkData && fgRef.current) {
       try {
-        // Configure forces for structured circular layout
+        // Configure forces for structured circular layout with larger 50px nodes
         fgRef.current.d3Force('charge').strength(node => 
-          node.isLead ? -300 : -150 // Reduced repulsion to maintain circular structure
+          node.isLead ? -1200 : -600 // Even stronger repulsion to prevent clumping
         );
         
         fgRef.current.d3Force('link').distance(link => {
@@ -311,34 +337,40 @@ const KenyaNetworkVisualization = () => {
           const target = networkData.nodes.find(n => n.id === targetId);
           
           if (source?.isLead || target?.isLead) {
-            return 150; // Increased distance to lead for better spacing
+            return 450; // Even larger distance from lead for better spacing
           }
           
           // Nodes with the same collaboration level should have more space
           if (source?.collaborationLevel === target?.collaborationLevel) {
-            return 180; // Increased spacing for same level
+            return 500; // Much larger spacing for same level nodes
           }
           
-          return 250; // Increased default distance for better spacing
+          return 550; // Much larger default distance to prevent clumping
         });
         
         // Add a radial force to maintain the structured circular rings
         fgRef.current.d3Force('radial', d3.forceRadial(node => {
           if (node.isLead) return 0; // Lead at center
           
-          // Maintain distinct circular rings
+          // Maintain distinct circular rings with much more space for larger nodes
           switch(node.collaborationLevel) {
-            case 'direct': return 200; // Inner ring
-            case 'secondary': return 320; // Middle ring
-            default: return 440; // Outer ring
+            case 'direct': return 450; // Much larger inner ring for 50px nodes
+            case 'secondary': return 700; // Much larger middle ring
+            default: return 950; // Much larger outer ring
           }
-        }, 0, 0).strength(0.6)); // Stronger radial force to maintain structure
+        }, 0, 0).strength(0.3)); // Reduced strength for more natural layout
         
-        // Add gentle collision detection to prevent overlap while maintaining structure
+        // Add collision detection adjusted for 50px nodes with more padding
         fgRef.current.d3Force('collision', d3.forceCollide().radius(node => {
-          const baseSize = node.isLead ? 25 : Math.max(12, 8 + node.val * 2);
-          return baseSize + 10; // Reduced padding to maintain circular positioning
-        }).strength(0.3)); // Reduced strength to preserve circular layout
+          const baseSize = node.isLead ? 50 : Math.max(20, node.val); // Match actual node sizes
+          return baseSize + 50; // Much larger padding to prevent overlap
+        }).strength(0.7)); // Stronger collision to maintain spacing
+        
+        // Add a weak centering force to keep network together but allow spacing
+        fgRef.current.d3Force('center', d3.forceCenter(0, 0).strength(0.05));
+        
+        // Restart the simulation with new parameters
+        fgRef.current.d3ReheatSimulation();
         
         // Create structured circular layout like the reference image
         const directNodes = networkData.nodes.filter(n => n.collaborationLevel === 'direct');
@@ -421,20 +453,22 @@ const KenyaNetworkVisualization = () => {
       const isSelected = selectedNode && selectedNode.id === node.id;
       const isHighlighted = highlightNodes.has(node.id);
       
-      // Enhanced size calculation with better scaling - made consistent with clickable area
-      const baseSize = node.isLead ? 20 : Math.max(8, 6 + node.val * 1.8);
-      const sizeMultiplier = isSelected ? 1.4 : (isHighlighted ? 1.1 : 1);
-      const size = baseSize * sizeMultiplier;
+      // Larger nodes with max 50px radius
+      const baseSize = node.isLead ? 50 : Math.max(20, node.val); // Max 50px radius
+      const sizeMultiplier = isSelected ? 1.3 : (isHighlighted ? 1.15 : 1);
+      const size = Math.min(50, baseSize * sizeMultiplier); // Ensure max 50px
       
       // Get consistent node color based on relationship to lead (never changes)
       const nodeColor = getNodeColor(node, isSelected ? 'selected' : 'normal');
       const gradientColors = getNodeGradient(node);
       
-      // Enhanced opacity logic for better visual hierarchy
+      // Enhanced opacity logic for better visual hierarchy (including pending status)
       if (selectedNode && !isHighlighted && !isSelected) {
         ctx.globalAlpha = 0.2; // More contrast for non-selected nodes
       } else if (isHighlighted && !isSelected) {
         ctx.globalAlpha = 0.9;
+      } else if (node.isPending && !isSelected) {
+        ctx.globalAlpha = 0.7; // Slightly transparent for pending collaborators
       } else {
         ctx.globalAlpha = 1;
       }
@@ -520,11 +554,20 @@ const KenyaNetworkVisualization = () => {
         ctx.restore();
       }
       
-      // Enhanced border with color-specific styling
-      if (isSelected || node.isLead) {
+      // Enhanced border with color-specific styling (including pending status)
+      if (isSelected || node.isLead || node.isPending) {
         ctx.strokeStyle = isSelected ? 'white' : d3.color(nodeColor).brighter(1);
         ctx.lineWidth = (isSelected ? 3 : 2) / globalScale;
+        
+        // Dashed border for pending collaborators
+        if (node.isPending && !isSelected) {
+          ctx.setLineDash([3 / globalScale, 3 / globalScale]);
+        } else {
+          ctx.setLineDash([]);
+        }
+        
         ctx.stroke();
+        ctx.setLineDash([]); // Reset line dash
       }
       
       // Role indicator for lead investigator
@@ -1122,7 +1165,7 @@ const KenyaNetworkVisualization = () => {
                 />
                 <Chip
                   icon={<Article fontSize="small" />}
-                  label={`${graphStats.totalLinks} Collaborations`}
+                  label={`${graphStats.totalOutputs} Outputs (${graphStats.totalPublications}P + ${graphStats.totalManuscripts}M)`}
                   size="small"
                   sx={{
                     backgroundColor: 'rgba(76, 175, 80, 0.1)',
@@ -1497,33 +1540,51 @@ const KenyaNetworkVisualization = () => {
                     )}
                     
                     {!selectedNode.isLead && (
-                      <Chip 
-                        size="small" 
-                        label={`${selectedNode.collaborationLevel?.charAt(0).toUpperCase() + selectedNode.collaborationLevel?.slice(1)} Collaborator`}
-                        sx={{ 
-                          bgcolor: (() => {
-                            switch (selectedNode.collaborationLevel) {
-                              case 'direct': return 'rgba(139, 108, 188, 0.2)';
-                              case 'secondary': return 'rgba(229, 57, 53, 0.2)';
-                              default: return 'rgba(120, 144, 156, 0.2)';
-                            }
-                          })(),
-                          color: getNodeColor(selectedNode),
-                          fontWeight: 700,
-                          fontSize: '0.75rem',
-                          border: `1px solid ${getNodeColor(selectedNode)}30`
-                        }} 
-                      />
+                      <>
+                        <Chip 
+                          size="small" 
+                          label={`${selectedNode.collaborationLevel?.charAt(0).toUpperCase() + selectedNode.collaborationLevel?.slice(1)} Collaborator`}
+                          sx={{ 
+                            bgcolor: (() => {
+                              switch (selectedNode.collaborationLevel) {
+                                case 'direct': return 'rgba(139, 108, 188, 0.2)';
+                                case 'secondary': return 'rgba(229, 57, 53, 0.2)';
+                                default: return 'rgba(120, 144, 156, 0.2)';
+                              }
+                            })(),
+                            color: getNodeColor(selectedNode),
+                            fontWeight: 700,
+                            fontSize: '0.75rem',
+                            border: `1px solid ${getNodeColor(selectedNode)}30`
+                          }} 
+                        />
+                        {selectedNode.isPending && (
+                          <Chip 
+                            size="small" 
+                            label="Pending Invitation"
+                            sx={{ 
+                              bgcolor: 'rgba(255, 152, 0, 0.2)',
+                              color: '#e65100',
+                              fontWeight: 700,
+                              fontSize: '0.75rem',
+                              border: '1px dashed #e65100',
+                              ml: 1
+                            }} 
+                          />
+                        )}
+                      </>
                     )}
                   </Box>
                 </Box>
               </Box>
               
-              {/* Publication count prominently displayed */}
+              {/* Research outputs prominently displayed */}
               <Box sx={{ 
                 display: 'flex', 
                 justifyContent: 'center',
-                mt: 1
+                gap: 1,
+                mt: 1,
+                flexWrap: 'wrap'
               }}>
                 <Chip 
                   icon={<Article fontSize="small" />}
@@ -1538,6 +1599,21 @@ const KenyaNetworkVisualization = () => {
                     border: '1px solid rgba(76, 175, 80, 0.3)'
                   }} 
                 />
+                {selectedNode.manuscripts_count > 0 && (
+                  <Chip 
+                    icon={<PersonPin fontSize="small" />}
+                    label={`${selectedNode.manuscripts_count} Manuscripts`}
+                    sx={{ 
+                      bgcolor: 'rgba(139, 108, 188, 0.2)', 
+                      color: '#4a148c',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      px: 2,
+                      height: 32,
+                      border: '1px solid rgba(139, 108, 188, 0.3)'
+                    }} 
+                  />
+                )}
               </Box>
             </Box>
             
@@ -1639,7 +1715,11 @@ const KenyaNetworkVisualization = () => {
                   </Card>
                   
                   {/* Statistics Row */}
-                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                  <Box sx={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: selectedNode.manuscripts_count > 0 ? 'repeat(3, 1fr)' : '1fr 1fr', 
+                    gap: 1.5 
+                  }}>
                     {/* Total Publications */}
                     <Card elevation={1} sx={{ 
                       p: 2, 
@@ -1664,23 +1744,49 @@ const KenyaNetworkVisualization = () => {
                       </Typography>
                     </Card>
                     
+                    {/* Manuscripts */}
+                    {selectedNode.manuscripts_count > 0 && (
+                      <Card elevation={1} sx={{ 
+                        p: 2, 
+                        backgroundColor: 'rgba(139, 108, 188, 0.08)',
+                        border: '1px solid rgba(139, 108, 188, 0.2)',
+                        borderRadius: 2,
+                        textAlign: 'center'
+                      }}>
+                        <Typography variant="h6" sx={{ 
+                          fontWeight: 700, 
+                          color: KENYA_COLORS.direct,
+                          mb: 0.5
+                        }}>
+                          {selectedNode.manuscripts_count}
+                        </Typography>
+                        <Typography variant="caption" sx={{ 
+                          color: KENYA_COLORS.direct,
+                          fontWeight: 600,
+                          fontSize: '0.75rem'
+                        }}>
+                          Manuscripts
+                        </Typography>
+                      </Card>
+                    )}
+                    
                     {/* Network Connections */}
                     <Card elevation={1} sx={{ 
                       p: 2, 
-                      backgroundColor: 'rgba(139, 108, 188, 0.08)',
-                      border: '1px solid rgba(139, 108, 188, 0.2)',
+                      backgroundColor: 'rgba(69, 183, 209, 0.08)',
+                      border: '1px solid rgba(69, 183, 209, 0.2)',
                       borderRadius: 2,
                       textAlign: 'center'
                     }}>
                       <Typography variant="h6" sx={{ 
                         fontWeight: 700, 
-                        color: KENYA_COLORS.direct,
+                        color: '#0277bd',
                         mb: 0.5
                       }}>
                         {highlightNodes.size - 1}
                       </Typography>
                       <Typography variant="caption" sx={{ 
-                        color: KENYA_COLORS.direct,
+                        color: '#0277bd',
                         fontWeight: 600,
                         fontSize: '0.75rem'
                       }}>
@@ -2110,6 +2216,28 @@ const KenyaNetworkVisualization = () => {
                   </Typography>
                 </Box>
               </Box>
+
+              {/* Pending Collaborators */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                  <Box sx={{ 
+                    width: 12, 
+                    height: 12, 
+                    borderRadius: '50%', 
+                    background: `linear-gradient(135deg, ${KENYA_COLORS.directGradient[0]}, ${KENYA_COLORS.directGradient[1]})`,
+                    border: '2px dashed rgba(255, 152, 0, 0.8)',
+                    opacity: 0.7
+                  }} />
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: KENYA_COLORS.text.primary }}>
+                    Pending Invitations
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: KENYA_COLORS.text.secondary }}>
+                    Collaborators with pending invitations
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
             
             {/* Interaction Guide */}
@@ -2166,17 +2294,17 @@ const KenyaNetworkVisualization = () => {
           enableZoomInteraction={true}
           enablePanInteraction={true}
           nodeRelSize={8}
-          d3AlphaDecay={0.015}
-          d3VelocityDecay={0.4}
-          cooldownTicks={150}
+          d3AlphaDecay={0.01}
+          d3VelocityDecay={0.3}
+          cooldownTicks={300}
           backgroundColor={KENYA_COLORS.background}
           width={typeof window !== 'undefined' ? window.innerWidth : 1200}
           height={typeof window !== 'undefined' ? window.innerHeight : 800}
           nodeLabel={() => ''}
           linkLabel={() => ''}
           nodePointerAreaPaint={(node, color, ctx) => {
-            const baseSize = node.isLead ? 24 : Math.max(10, 8 + node.val * 2);
-            const clickableSize = baseSize * 2;
+            const baseSize = node.isLead ? 50 : Math.max(20, node.val); // Match node size
+            const clickableSize = Math.max(50, baseSize * 1.2); // Slightly larger clickable area
             
             ctx.fillStyle = color;
             ctx.beginPath();

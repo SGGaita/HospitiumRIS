@@ -72,8 +72,8 @@ const SuperAdminPage = () => {
       try {
         // Fetch basic stats - you can extend this with actual API calls
         setStats({
-          totalUsers: 150,
-          activeUsers: 142,
+          totalUsers: 4,
+          activeUsers: 3,
           pendingUsers: 8,
           totalLogs: 1234,
           errorLogs: 23,

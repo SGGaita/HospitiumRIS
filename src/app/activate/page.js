@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import {
   Box,
   Container,
@@ -21,7 +21,59 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useThemeMode } from '../../components/ThemeProvider';
 
-const ActivatePage = () => {
+// Loading component for Suspense fallback
+const ActivatePageLoading = () => {
+  const theme = useTheme();
+  const { isDarkMode } = useThemeMode();
+  
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#ffffff',
+        py: 3,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, sm: 4 },
+            backgroundColor: '#ffffff',
+            border: '1px solid rgba(0,0,0,0.1)',
+            borderRadius: 2,
+            textAlign: 'center',
+          }}
+        >
+          <Box sx={{ mb: 3 }}>
+            <Image
+              src={isDarkMode ? "/hospitium-logo-dark.png" : "/hospitium-logo.png"}
+              alt="Hospitium RIS"
+              width={140}
+              height={32}
+              priority
+            />
+          </Box>
+          <CircularProgress 
+            size={32} 
+            sx={{ color: theme.palette.primary.main, mb: 2 }} 
+          />
+          <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+            Loading...
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Please wait while we prepare your activation page...
+          </Typography>
+        </Paper>
+      </Container>
+    </Box>
+  );
+};
+
+const ActivatePageContent = () => {
   const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -186,6 +238,15 @@ const ActivatePage = () => {
         </Paper>
       </Container>
     </Box>
+  );
+};
+
+// Main component with Suspense boundary
+const ActivatePage = () => {
+  return (
+    <Suspense fallback={<ActivatePageLoading />}>
+      <ActivatePageContent />
+    </Suspense>
   );
 };
 

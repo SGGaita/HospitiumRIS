@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { logSuccess, logError, logInfo, logApiActivity, getRequestMetadata } from '@/utils/activityLogger';
 
@@ -315,13 +316,30 @@ export async function GET(request) {
       // Create response with user session
       const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}${dashboardRoute}?login=success`);
       
-      // Set session cookie
-      response.cookies.set('hospitium_session', existingUser.id, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 // 24 hours
-      });
+      // Set session cookie - check for remember me preference from state/cookies
+      // Check if remember me was set during login initiation
+      const cookieStore = await cookies();
+      const rememberMeCookie = cookieStore.get('orcid_remember_me');
+      const rememberMe = rememberMeCookie?.value === 'true';
+      
+      if (rememberMe) {
+        // 30 days for "remember me"
+        response.cookies.set('hospitium_session', existingUser.id, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 30 * 24 * 60 * 60 // 30 days in seconds
+        });
+        // Clean up remember me preference cookie
+        response.cookies.delete('orcid_remember_me');
+      } else {
+        // Session cookie (expires when browser closes)
+        response.cookies.set('hospitium_session', existingUser.id, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+        });
+      }
 
       return response;
       

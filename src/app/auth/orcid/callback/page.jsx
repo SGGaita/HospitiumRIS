@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Box, 
@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import Image from 'next/image';
 
-export default function OrcidCallback() {
+function OrcidCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [processingStage, setProcessingStage] = useState('Initializing...');
@@ -301,5 +301,80 @@ export default function OrcidCallback() {
         </Paper>
       </Container>
     </Box>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 2,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper
+          elevation={8}
+          sx={{
+            p: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 3,
+            borderRadius: 3,
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          {/* Logo */}
+          <Box sx={{ mb: 2 }}>
+            <Image
+              src="/hospitium-logo.png"
+              alt="Hospitium RIS"
+              width={160}
+              height={36}
+              priority
+            />
+          </Box>
+
+          <CircularProgress 
+            size={50} 
+            sx={{ 
+              color: '#8b6cbc',
+              '& .MuiCircularProgress-circle': {
+                strokeLinecap: 'round',
+              }
+            }}
+          />
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            fontWeight="bold" 
+            color="text.primary"
+            sx={{ textAlign: 'center' }}
+          >
+            Loading ORCID Callback
+          </Typography>
+          <Typography 
+            variant="body1" 
+            color="text.secondary"
+            sx={{ textAlign: 'center', maxWidth: 400 }}
+          >
+            Please wait while we initialize your ORCID authentication...
+          </Typography>
+        </Paper>
+      </Container>
+    </Box>
+  );
+}
+
+export default function OrcidCallback() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <OrcidCallbackContent />
+    </Suspense>
   );
 }

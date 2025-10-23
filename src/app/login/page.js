@@ -16,6 +16,8 @@ import {
   InputAdornment,
   Alert,
   Stack,
+  Tooltip,
+  FormHelperText,
 } from '@mui/material';
 import {
   Visibility,
@@ -81,17 +83,33 @@ const NoSSR = ({ children, fallback = null }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [generalError, setGeneralError] = useState('');
 
-  // Log page visit on component mount
+  // Log page visit on component mount and restore remember me preference
   useEffect(() => {
     logClientActivity('login_page_visited');
+    
+    // Restore remember me preference from localStorage
+    const savedRememberMe = localStorage.getItem('hospitium_remember_me');
+    if (savedRememberMe === 'true') {
+      setFormData(prev => ({ ...prev, rememberMe: true }));
+      logClientActivity('remember_me_preference_restored');
+    }
   }, []);
 
   const handleInputChange = (e) => {
     const { name, value, checked } = e.target;
+    const newValue = name === 'rememberMe' ? checked : value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'rememberMe' ? checked : value
+      [name]: newValue
     }));
+    
+    // Persist remember me preference
+    if (name === 'rememberMe') {
+      localStorage.setItem('hospitium_remember_me', checked.toString());
+      logClientActivity('remember_me_preference_changed', { checked });
+    }
+    
     // Clear errors when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -256,13 +274,19 @@ const NoSSR = ({ children, fallback = null }) => {
       logClientActivity('orcid_login_started', {
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
-        referrer: document.referrer
+        referrer: document.referrer,
+        rememberMe: formData.rememberMe
       });
 
       // Clear any existing errors
       setGeneralError('');
       setErrors({});
       setIsLoading(true); // Show loading state during ORCID flow
+
+      // Store remember me preference for ORCID callback
+      if (formData.rememberMe) {
+        document.cookie = `orcid_remember_me=true; path=/; max-age=600; secure=${process.env.NODE_ENV === 'production'}; samesite=strict`;
+      }
 
       // Check for required environment variables
       const clientId = process.env.NEXT_PUBLIC_ORCID_CLIENT_ID;
@@ -497,27 +521,42 @@ const NoSSR = ({ children, fallback = null }) => {
               sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 mb: 3,
               }}
             >
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name="rememberMe"
-                    checked={formData.rememberMe}
-                    onChange={handleInputChange}
-                    color="primary"
+              <Box>
+                <Tooltip 
+                  title="Keep me signed in for 30 days instead of just this session" 
+                  arrow
+                  placement="top"
+                >
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        name="rememberMe"
+                        checked={formData.rememberMe}
+                        onChange={handleInputChange}
+                        color="primary"
+                      />
+                    }
+                    label="Remember me"
                   />
-                }
-                label="Remember me"
-              />
+                </Tooltip>
+                <FormHelperText sx={{ ml: 4, mt: 0 }}>
+                  {formData.rememberMe 
+                    ? "You'll stay signed in for 30 days" 
+                    : "Sign out when browser closes"
+                  }
+                </FormHelperText>
+              </Box>
               <Link
                 href="/forgot-password"
                 variant="body2"
                 sx={{
                   color: theme.palette.primary.main,
                   textDecoration: 'none',
+                  mt: 1,
                   '&:hover': {
                     textDecoration: 'underline',
                   },

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import {
   Box,
   Container,
@@ -9,6 +9,7 @@ import {
   Button,
   Alert,
   Chip,
+  CircularProgress,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
@@ -20,7 +21,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useThemeMode } from '../../../components/ThemeProvider';
 
-const RegisterSuccessPage = () => {
+const RegisterSuccessContent = () => {
   const theme = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -155,6 +156,63 @@ const RegisterSuccessPage = () => {
         </Paper>
       </Container>
     </Box>
+  );
+};
+
+const LoadingFallback = () => {
+  const theme = useTheme();
+  const { isDarkMode } = useThemeMode();
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: theme.palette.background.default,
+        py: 3,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 3, sm: 4 },
+            backgroundColor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.mode === 'dark' ? '#404040' : 'rgba(0,0,0,0.1)'}`,
+            borderRadius: 2,
+            textAlign: 'center',
+          }}
+        >
+          {/* Logo */}
+          <Box sx={{ mb: 3 }}>
+            <Image
+              src={isDarkMode ? "/hospitium-logo-dark.png" : "/hospitium-logo.png"}
+              alt="Hospitium RIS"
+              width={140}
+              height={32}
+              priority
+            />
+          </Box>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <CircularProgress size={24} />
+            <Typography variant="body1" color="text.secondary">
+              Loading...
+            </Typography>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
+  );
+};
+
+const RegisterSuccessPage = () => {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <RegisterSuccessContent />
+    </Suspense>
   );
 };
 

@@ -940,7 +940,7 @@ export default function ManagePublications() {
                   No publications found
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  {searchQuery || statusFilter !== 'all' || typeFilter !== 'all'
+                  {searchQuery || typeFilter !== 'all'
                     ? 'Try adjusting your search filters'
                     : 'Start by importing publications from PubMed, Crossref, OpenAlex, or other sources'}
                 </Typography>

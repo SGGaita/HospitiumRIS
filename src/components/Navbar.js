@@ -57,7 +57,6 @@ import {
   Update as FollowUpIcon,
   Timeline as StatusIcon,
   AccountBalance as BudgetIcon,
-  Receipt as ExpenseIcon,
   Assignment as AwardIcon,
   People as DonorManagementIcon,
 } from '@mui/icons-material';
@@ -212,16 +211,10 @@ const Navbar = () => {
                 title: 'BUDGET',
                 items: [
                   {
-                    label: 'View Budgets',
-                    description: 'Monitor financial plans',
+                    label: 'Budget Management',
+                    description: 'Monitor budgets and track expenses',
                     icon: <BudgetIcon sx={{ color: '#8b6cbc', fontSize: 20 }} />,
                     path: '/researcher/projects/budget/view'
-                  },
-                  {
-                    label: 'Track Expenses',
-                    description: 'Record project expenses',
-                    icon: <ExpenseIcon sx={{ color: '#8b6cbc', fontSize: 20 }} />,
-                    path: '/researcher/projects/budget/expenses'
                   }
                 ]
               }
