@@ -30,7 +30,12 @@ import {
   Fade,
   alpha,
   useTheme,
-  Skeleton
+  Skeleton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
 } from '@mui/material';
 import {
   Campaign as CampaignIcon,
@@ -47,7 +52,8 @@ import {
   ExpandMore as ExpandMoreIcon,
   VisibilityOff as VisibilityOffIcon,
   FilterList as FilterListIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 
 import PageHeader from '@/components/common/PageHeader';
@@ -121,8 +127,8 @@ export default function CampaignManagement() {
   const [mounted, setMounted] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Collapsible sections state
-  const [showCalendar, setShowCalendar] = useState(false);
+  // Modal states
+  const [calendarModal, setCalendarModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   // Search and filter states
@@ -1417,8 +1423,13 @@ export default function CampaignManagement() {
               </Box>
             ) : (
               <Box sx={{ p: 4 }}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 3,
+                  flexDirection: { xs: 'column', md: 'row' },
+                  alignItems: 'stretch'
+                }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <ActivityList
                       activities={preActivities}
                       phase="Pre-Campaign"
@@ -1427,8 +1438,8 @@ export default function CampaignManagement() {
                       getActivityIcon={getActivityIcon}
                       getStatusColor={getStatusColor}
                     />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <ActivityList
                       activities={postActivities}
                       phase="Post-Campaign"
@@ -1437,8 +1448,8 @@ export default function CampaignManagement() {
                       getActivityIcon={getActivityIcon}
                       getStatusColor={getStatusColor}
                     />
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               </Box>
             )}
           </AccordionDetails>
@@ -1528,12 +1539,12 @@ export default function CampaignManagement() {
           gradient="linear-gradient(135deg, #8b6cbc 0%, #a084d1 50%, #b794f4 100%)"
           actionButton={
             <Stack direction="row" spacing={2} alignItems="center">
-              <Tooltip title={showCalendar ? "Hide Calendar" : "Show Calendar"} arrow>
+              <Tooltip title="Open Calendar View" arrow>
                 <Button
                   variant="outlined"
                   size="small"
-                  startIcon={showCalendar ? <VisibilityOffIcon /> : <CalendarIcon />}
-                  onClick={() => setShowCalendar(!showCalendar)}
+                  startIcon={<CalendarIcon />}
+                  onClick={() => setCalendarModal(true)}
                   sx={{
                     background: 'rgba(255,255,255,0.15)',
                     backdropFilter: 'blur(10px)',
@@ -1595,28 +1606,65 @@ export default function CampaignManagement() {
       <Container maxWidth="xl" sx={{ py: 4, minHeight: '50vh' }}>
     
 
-        {/* Calendar - Collapsible */}
-        <Collapse 
-          in={showCalendar} 
-          timeout={{ enter: 400, exit: 300 }}
-          easing={{
-            enter: 'cubic-bezier(0.4, 0, 0.2, 1)',
-            exit: 'cubic-bezier(0.4, 0, 0.6, 1)'
+        {/* Calendar Modal */}
+        <Dialog
+          open={calendarModal}
+          onClose={() => setCalendarModal(false)}
+          maxWidth="xl"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              minHeight: '80vh',
+              maxHeight: '90vh'
+            }
           }}
         >
-          <Box sx={{ mb: 3, overflow: 'hidden' }}>
-            <Suspense fallback={<Skeleton height={400} />}>
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #a084d1 50%, #b794f4 100%)',
+            color: 'white',
+            p: 3
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <CalendarIcon />
+              <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                Campaign Calendar
+              </Typography>
+            </Box>
+            <IconButton 
+              onClick={() => setCalendarModal(false)}
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          
+          <DialogContent sx={{ p: 0, overflow: 'hidden' }}>
+            <Suspense fallback={
+              <Box sx={{ 
+                height: '600px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+              }}>
+                <CircularProgress />
+              </Box>
+            }>
               <LazyCampaignCalendar
                 campaigns={filteredCampaigns}
                 activities={activities}
                 loading={loading}
                 onSelectCampaign={(campaign) => console.log('Select campaign:', campaign)}
-                height={400}
+                height={600}
                 DASHBOARD_COLORS={DASHBOARD_COLORS}
+                hideHeader={true}
               />
             </Suspense>
-          </Box>
-        </Collapse>
+          </DialogContent>
+        </Dialog>
 
         {/* Search and Filters - Collapsible */}
         <Collapse 

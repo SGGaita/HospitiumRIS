@@ -340,13 +340,13 @@ const ResearcherDashboard = () => {
           </Box>
         ) : dashboardData && (
           <>
-            {/* Stats Cards */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {/* Total Publications */}
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+        {/* Stats Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {/* Total Publications */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={3} sx={{ 
-                  background: 'linear-gradient(135deg, #8b6cbc 0%, #a084d1 100%)',
-                  color: 'white',
+              background: 'linear-gradient(135deg, #8b6cbc 0%, #a084d1 100%)',
+              color: 'white',
                   height: '100%',
                   position: 'relative',
                   overflow: 'hidden',
@@ -365,36 +365,36 @@ const ResearcherDashboard = () => {
                   <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <ArticleIcon sx={{ fontSize: 28, opacity: 0.9 }} />
-                      <Chip 
-                        label={dashboardData.stats.totalPublications.change}
-                        size="small"
-                        sx={{ 
+                  <Chip 
+                    label={dashboardData.stats.totalPublications.change}
+                    size="small"
+                    sx={{ 
                           backgroundColor: 'rgba(255,255,255,0.25)',
-                          color: 'white',
+                      color: 'white',
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           border: '1px solid rgba(255,255,255,0.3)'
-                        }}
-                      />
-                    </Box>
+                    }}
+                  />
+                </Box>
                     <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, fontSize: '2.5rem' }}>
-                      {dashboardData.stats.totalPublications.value}
-                    </Typography>
+                  {dashboardData.stats.totalPublications.value}
+                </Typography>
                     <Typography variant="body1" sx={{ opacity: 0.95, fontWeight: 500 }}>
                       Publications
-                    </Typography>
+                </Typography>
                     <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mt: 1 }}>
                       Research outputs published
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-              {/* Ongoing Projects */}
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          {/* Ongoing Projects */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={3} sx={{ 
-                  background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)',
-                  color: 'white',
+              background: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 100%)',
+              color: 'white',
                   height: '100%',
                   position: 'relative',
                   overflow: 'hidden',
@@ -413,36 +413,36 @@ const ResearcherDashboard = () => {
                   <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <ProjectIcon sx={{ fontSize: 28, opacity: 0.9 }} />
-                      <Chip 
-                        label={dashboardData.stats.ongoingProjects.change}
-                        size="small"
-                        sx={{ 
+                  <Chip 
+                    label={dashboardData.stats.ongoingProjects.change}
+                    size="small"
+                    sx={{ 
                           backgroundColor: 'rgba(255,255,255,0.25)',
-                          color: 'white',
+                      color: 'white',
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           border: '1px solid rgba(255,255,255,0.3)'
-                        }}
-                      />
-                    </Box>
+                    }}
+                  />
+                </Box>
                     <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, fontSize: '2.5rem' }}>
-                      {dashboardData.stats.ongoingProjects.value}
-                    </Typography>
+                  {dashboardData.stats.ongoingProjects.value}
+                </Typography>
                     <Typography variant="body1" sx={{ opacity: 0.95, fontWeight: 500 }}>
                       Active Projects
-                    </Typography>
+                </Typography>
                     <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mt: 1 }}>
                       Proposals & research initiatives
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-              {/* Collaborations */}
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          {/* Collaborations */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={3} sx={{ 
-                  background: 'linear-gradient(135deg, #4ECDC4 0%, #6ED4CC 100%)',
-                  color: 'white',
+              background: 'linear-gradient(135deg, #4ECDC4 0%, #6ED4CC 100%)',
+              color: 'white',
                   height: '100%',
                   position: 'relative',
                   overflow: 'hidden',
@@ -461,36 +461,36 @@ const ResearcherDashboard = () => {
                   <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <CollaborationIcon sx={{ fontSize: 28, opacity: 0.9 }} />
-                      <Chip 
-                        label={dashboardData.stats.collaborations.change}
-                        size="small"
-                        sx={{ 
+                  <Chip 
+                    label={dashboardData.stats.collaborations.change}
+                    size="small"
+                    sx={{ 
                           backgroundColor: 'rgba(255,255,255,0.25)',
-                          color: 'white',
+                      color: 'white',
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           border: '1px solid rgba(255,255,255,0.3)'
-                        }}
-                      />
-                    </Box>
+                    }}
+                  />
+                </Box>
                     <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, fontSize: '2.5rem' }}>
-                      {dashboardData.stats.collaborations.value}
-                    </Typography>
+                  {dashboardData.stats.collaborations.value}
+                </Typography>
                     <Typography variant="body1" sx={{ opacity: 0.95, fontWeight: 500 }}>
                       Collaborators
-                    </Typography>
+                </Typography>
                     <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mt: 1 }}>
                       Research partnerships
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-              {/* Network Size */}
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          {/* Network Size */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={3} sx={{ 
-                  background: 'linear-gradient(135deg, #45B7D1 0%, #67C3D6 100%)',
-                  color: 'white',
+              background: 'linear-gradient(135deg, #45B7D1 0%, #67C3D6 100%)',
+              color: 'white',
                   height: '100%',
                   position: 'relative',
                   overflow: 'hidden',
@@ -509,36 +509,36 @@ const ResearcherDashboard = () => {
                   <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <NetworkIcon sx={{ fontSize: 28, opacity: 0.9 }} />
-                      <Chip 
-                        label={dashboardData.stats.networkSize.change}
-                        size="small"
-                        sx={{ 
+                  <Chip 
+                    label={dashboardData.stats.networkSize.change}
+                    size="small"
+                    sx={{ 
                           backgroundColor: 'rgba(255,255,255,0.25)',
-                          color: 'white',
+                      color: 'white',
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           border: '1px solid rgba(255,255,255,0.3)'
-                        }}
-                      />
-                    </Box>
+                    }}
+                  />
+                </Box>
                     <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, fontSize: '2.5rem' }}>
-                      {dashboardData.stats.networkSize.value}
-                    </Typography>
+                  {dashboardData.stats.networkSize.value}
+                </Typography>
                     <Typography variant="body1" sx={{ opacity: 0.95, fontWeight: 500 }}>
-                      Network Size
-                    </Typography>
+                  Network Size
+                </Typography>
                     <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mt: 1 }}>
                       Connected researchers
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-              {/* Citation Impact */}
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          {/* Citation Impact */}
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={3} sx={{ 
-                  background: 'linear-gradient(135deg, #F7B731 0%, #F9CA24 100%)',
-                  color: 'white',
+              background: 'linear-gradient(135deg, #F7B731 0%, #F9CA24 100%)',
+              color: 'white',
                   height: '100%',
                   position: 'relative',
                   overflow: 'hidden',
@@ -557,35 +557,35 @@ const ResearcherDashboard = () => {
                   <CardContent sx={{ p: 3, position: 'relative', zIndex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                       <TrendingUpIcon sx={{ fontSize: 28, opacity: 0.9 }} />
-                      <Chip 
-                        label={dashboardData.stats.citationImpact.change}
-                        size="small"
-                        sx={{ 
+                  <Chip 
+                    label={dashboardData.stats.citationImpact.change}
+                    size="small"
+                    sx={{ 
                           backgroundColor: 'rgba(255,255,255,0.25)',
-                          color: 'white',
+                      color: 'white',
                           fontSize: '0.75rem',
                           fontWeight: 600,
                           border: '1px solid rgba(255,255,255,0.3)'
-                        }}
-                      />
-                    </Box>
+                    }}
+                  />
+                </Box>
                     <Typography variant="h3" sx={{ fontWeight: 800, mb: 0.5, fontSize: '2.5rem' }}>
-                      {dashboardData.stats.citationImpact.value}
-                    </Typography>
+                  {dashboardData.stats.citationImpact.value}
+                </Typography>
                     <Typography variant="body1" sx={{ opacity: 0.95, fontWeight: 500 }}>
-                      Citation Impact
-                    </Typography>
+                  Citation Impact
+                </Typography>
                     <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mt: 1 }}>
                       Estimated total citations
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          </Grid>
 
-            <Grid container spacing={4}>
-              {/* Research Analytics */}
-              <Grid size={{ xs: 12, md: 8 }}>
+        <Grid container spacing={4}>
+          {/* Research Analytics */}
+          <Grid size={{ xs: 12, md: 8 }}>
                 <Card elevation={4} sx={{ 
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
                   backdropFilter: 'blur(20px)',
@@ -595,32 +595,32 @@ const ResearcherDashboard = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
                       <Typography variant="h5" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1.5, color: '#2d3748' }}>
                         <BarChartIcon sx={{ color: '#8b6cbc', fontSize: 28 }} />
-                        Research Analytics
-                      </Typography>
+                    Research Analytics
+                </Typography>
                       <Box sx={{ display: 'flex', gap: 1.5 }}>
                         <Chip label="Publications" size="small" sx={{ bgcolor: 'rgba(139, 108, 188, 0.1)', color: '#8b6cbc' }} />
                         <Chip label="Projects" size="small" sx={{ bgcolor: 'rgba(255, 107, 107, 0.1)', color: '#FF6B6B' }} />
                         <IconButton size="small" sx={{ color: '#8b6cbc', bgcolor: 'rgba(139, 108, 188, 0.1)' }}>
-                          <AssessmentIcon />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                    
+                      <AssessmentIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+                
                     {/* Enhanced Chart */}
-                    <Box sx={{ 
+                <Box sx={{ 
                       height: 240, 
-                      display: 'flex', 
-                      alignItems: 'end', 
-                      justifyContent: 'space-around',
+                  display: 'flex', 
+                  alignItems: 'end', 
+                  justifyContent: 'space-around',
                       background: 'linear-gradient(135deg, rgba(139, 108, 188, 0.02) 0%, rgba(139, 108, 188, 0.05) 100%)',
                       borderRadius: 2,
                       p: 3,
                       mb: 3,
                       border: '1px solid rgba(139, 108, 188, 0.1)'
-                    }}>
-                      {dashboardData.analyticsData.publicationsOverTime.map((item, index) => (
+                }}>
+                  {dashboardData.analyticsData.publicationsOverTime.map((item, index) => (
                         <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                          <Box sx={{ 
+                      <Box sx={{ 
                             width: 48,
                             height: Math.max(20, (item.count * 60) + 20),
                             background: item.count > 0 
@@ -646,38 +646,38 @@ const ResearcherDashboard = () => {
                             }
                           }} />
                           <Typography variant="body2" sx={{ color: '#4a5568', fontWeight: 500 }}>
-                            {item.month}
-                          </Typography>
-                        </Box>
-                      ))}
+                        {item.month}
+                      </Typography>
                     </Box>
+                  ))}
+                </Box>
 
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                      <Box sx={{ textAlign: 'center' }}>
+                  <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" sx={{ color: '#8b6cbc', fontWeight: 800 }}>
                           {dashboardData.stats.totalPublications.value}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#718096', fontWeight: 500 }}>Total Publications</Typography>
-                      </Box>
-                      <Box sx={{ textAlign: 'center' }}>
+                  </Box>
+                  <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" sx={{ color: '#FF6B6B', fontWeight: 800 }}>
                           {dashboardData.recentPublications.filter(p => p.year === new Date().getFullYear()).length}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#718096', fontWeight: 500 }}>This Year</Typography>
-                      </Box>
-                      <Box sx={{ textAlign: 'center' }}>
+                  </Box>
+                  <Box sx={{ textAlign: 'center' }}>
                         <Typography variant="h4" sx={{ color: '#4ECDC4', fontWeight: 800 }}>
                           {dashboardData.stats.ongoingProjects.value}
                         </Typography>
                         <Typography variant="body2" sx={{ color: '#718096', fontWeight: 500 }}>Active Projects</Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+                  </Grid>
 
-              {/* Active Work */}
-              <Grid size={{ xs: 12, md: 4 }}>
+          {/* Active Work */}
+          <Grid size={{ xs: 12, md: 4 }}>
                 <Card elevation={4} sx={{ 
                   height: '100%',
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
@@ -685,21 +685,21 @@ const ResearcherDashboard = () => {
                   border: '1px solid rgba(139, 108, 188, 0.1)'
                 }}>
                   <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
                       <Typography variant="h6" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1.5, color: '#2d3748' }}>
                         <TimelineIcon sx={{ color: '#8b6cbc', fontSize: 24 }} />
                         Recent Work
-                      </Typography>
+                  </Typography>
                       <Tooltip title="Add new project">
                         <IconButton size="small" sx={{ 
                           color: '#8b6cbc', 
                           bgcolor: 'rgba(139, 108, 188, 0.1)',
                           '&:hover': { bgcolor: 'rgba(139, 108, 188, 0.2)' }
                         }}>
-                          <AddIcon />
-                        </IconButton>
+                    <AddIcon />
+                  </IconButton>
                       </Tooltip>
-                    </Box>
+                </Box>
 
                     {/* Recent Publications */}
                     {dashboardData.recentPublications.length > 0 ? (
@@ -721,7 +721,7 @@ const ResearcherDashboard = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                               <Typography variant="caption" sx={{ color: '#718096' }}>
                                 {pub.journal} • {pub.year}
-                              </Typography>
+                    </Typography>
                               <Chip 
                                 label={`${pub.citations} citations`}
                                 size="small"
@@ -734,17 +734,17 @@ const ResearcherDashboard = () => {
                             </Box>
                           </Paper>
                         ))}
-                      </Box>
+                  </Box>
                     ) : (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
                         <ArticleIcon sx={{ fontSize: 48, color: '#cbd5e0', mb: 1 }} />
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                           No publications found
-                        </Typography>
-                        <Button 
-                          size="small" 
-                          variant="outlined" 
-                          startIcon={<CreateIcon />}
+                    </Typography>
+                    <Button 
+                      size="small" 
+                      variant="outlined" 
+                      startIcon={<CreateIcon />}
                           sx={{ 
                             fontSize: '0.8rem',
                             borderColor: '#8b6cbc',
@@ -756,15 +756,15 @@ const ResearcherDashboard = () => {
                           }}
                         >
                           Add Publication
-                        </Button>
-                      </Box>
+                    </Button>
+                  </Box>
                     )}
-                  </CardContent>
-                </Card>
-              </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
 
-              {/* Research Collaboration Network */}
-              <Grid size={{ xs: 12 }}>
+          {/* Research Collaboration Network */}
+          <Grid size={{ xs: 12 }}>
                 <Card elevation={4} sx={{
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
                   backdropFilter: 'blur(20px)',
@@ -791,10 +791,10 @@ const ResearcherDashboard = () => {
                       Interactive visualization of your research connections and collaborations
                     </Typography>
                   </Box>
-                  <KenyaNetworkVisualization />
+            <KenyaNetworkVisualization />
                 </Card>
-              </Grid>
-            </Grid>
+          </Grid>
+        </Grid>
           </>
         )}
       </Container>

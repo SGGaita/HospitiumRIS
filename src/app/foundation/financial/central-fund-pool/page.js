@@ -178,114 +178,173 @@ const CentralFundPool = () => {
         </Paper>
 
         {/* Overview Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 3, 
+          mb: 4, 
+          flexWrap: 'wrap',
+          '& > *': {
+            flex: {
+              xs: '1 1 100%',
+              sm: '1 1 calc(50% - 12px)',
+              md: '1 1 calc(25% - 18px)'
+            }
+          }
+        }}>
           {/* Total Pool */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <AccountBalanceIcon sx={{ fontSize: 28, color: '#8b6cbc', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {formatCurrency(fundData.totalPool)}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Total Pool
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Consolidated funds
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <AccountBalanceIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: 'white' }}>
+                {formatCurrency(fundData.totalPool)}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Total Pool
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Consolidated funds
+              </Typography>
+            </CardContent>
+          </Card>
 
           {/* Available */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <MoneyIcon sx={{ fontSize: 28, color: '#2e7d32', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" color="success.main" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {formatCurrency(fundData.available)}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Available
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Ready for allocation
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <MoneyIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: 'white' }}>
+                {formatCurrency(fundData.available)}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Available
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Ready for allocation
+              </Typography>
+            </CardContent>
+          </Card>
 
           {/* Monthly Inflow */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <TrendingUpIcon sx={{ fontSize: 28, color: '#8b6cbc', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: '#8b6cbc' }}>
-                  {formatCurrency(fundData.monthlyInflow)}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Monthly Inflow
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  New funds received
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <TrendingUpIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: 'white' }}>
+                {formatCurrency(fundData.monthlyInflow)}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Monthly Inflow
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                New funds received
+              </Typography>
+            </CardContent>
+          </Card>
 
           {/* Monthly Outflow */}
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <TrendingDownIcon sx={{ fontSize: 28, color: '#ff9800', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: '#ff9800' }}>
-                  {formatCurrency(fundData.monthlyOutflow)}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Monthly Outflow
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Funds disbursed
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <TrendingDownIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: 'white' }}>
+                {formatCurrency(fundData.monthlyOutflow)}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Monthly Outflow
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                Funds disbursed
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
 
         {/* Fund Categories */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 3, 
+          mb: 4, 
+          flexWrap: 'wrap',
+          '& > *': {
+            flex: {
+              xs: '1 1 100%',
+              md: '1 1 calc(50% - 12px)'
+            }
+          }
+        }}>
           {/* Fundraising Funds */}
-          <Grid item xs={12} md={6}>
+          <Box>
             <Card sx={{ borderRadius: 3, boxShadow: 2, p: 3 }}>
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-                <MoneyIcon sx={{ fontSize: 24, color: '#2e7d32' }} />
+                <MoneyIcon sx={{ fontSize: 24, color: '#8b6cbc' }} />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Fundraising Funds
                 </Typography>
               </Stack>
               
-              <Typography variant="h4" sx={{ fontWeight: 600, color: '#2e7d32', mb: 1 }}>
+              <Typography variant="h4" sx={{ fontWeight: 600, color: '#8b6cbc', mb: 1 }}>
                 {formatCurrency(fundData.fundraisingFunds.total)}
               </Typography>
               
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={6}>
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <Box sx={{ flex: 1 }}>
                   <Typography variant="caption" color="text.secondary">
                     Available
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {formatCurrency(fundData.fundraisingFunds.available)}
                   </Typography>
-                </Grid>
-                <Grid item xs={6}>
+                </Box>
+                <Box sx={{ flex: 1 }}>
                   <Typography variant="caption" color="text.secondary">
                     Reserved
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {formatCurrency(fundData.fundraisingFunds.reserved)}
                   </Typography>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
 
               <LinearProgress
                 variant="determinate"
@@ -293,21 +352,21 @@ const CentralFundPool = () => {
                 sx={{
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: alpha('#2e7d32', 0.1),
+                  backgroundColor: alpha('#8b6cbc', 0.1),
                   '& .MuiLinearProgress-bar': {
-                    backgroundColor: '#2e7d32',
+                    backgroundColor: '#8b6cbc',
                     borderRadius: 4
                   }
                 }}
               />
             </Card>
-          </Grid>
+          </Box>
 
           {/* Grant Funds */}
-          <Grid item xs={12} md={6}>
+          <Box>
             <Card sx={{ borderRadius: 3, boxShadow: 2, p: 3 }}>
               <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-                <AccountBalanceIcon sx={{ fontSize: 24, color: '#1976d2' }} />
+                <AccountBalanceIcon sx={{ fontSize: 24, color: '#8b6cbc' }} />
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   Grant Funds
                 </Typography>
@@ -317,24 +376,24 @@ const CentralFundPool = () => {
                 {formatCurrency(fundData.grantFunds.total)}
               </Typography>
               
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={6}>
+              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <Box sx={{ flex: 1 }}>
                   <Typography variant="caption" color="text.secondary">
                     Available
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {formatCurrency(fundData.grantFunds.available)}
                   </Typography>
-                </Grid>
-                <Grid item xs={6}>
+                </Box>
+                <Box sx={{ flex: 1 }}>
                   <Typography variant="caption" color="text.secondary">
                     Reserved
                   </Typography>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>
                     {formatCurrency(fundData.grantFunds.reserved)}
                   </Typography>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
 
               <LinearProgress
                 variant="determinate"
@@ -342,16 +401,16 @@ const CentralFundPool = () => {
                 sx={{
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: alpha('#1976d2', 0.1),
+                  backgroundColor: alpha('#8b6cbc', 0.1),
                   '& .MuiLinearProgress-bar': {
-                    backgroundColor: '#1976d2',
+                    backgroundColor: '#8b6cbc',
                     borderRadius: 4
                   }
                 }}
               />
             </Card>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
 
         {/* Fund Distribution by Source */}
         <Paper sx={{ borderRadius: 3, p: 4 }}>
@@ -359,13 +418,23 @@ const CentralFundPool = () => {
             Fund Distribution by Source
           </Typography>
           
-          <Grid container spacing={3}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 3, 
+            flexWrap: 'wrap',
+            '& > *': {
+              flex: {
+                xs: '1 1 100%',
+                md: '1 1 calc(50% - 12px)'
+              }
+            }
+          }}>
             {fundSources.map((source) => (
-              <Grid item xs={12} md={6} key={source.id}>
+              <Box key={source.id}>
                 <Card sx={{ 
                   borderRadius: 3, 
                   boxShadow: 1,
-                  border: `2px solid ${alpha(source.category === 'Fundraising' ? '#2e7d32' : '#1976d2', 0.2)}`,
+                  border: `2px solid ${alpha('#8b6cbc', 0.2)}`,
                   '&:hover': {
                     boxShadow: 3,
                     transform: 'translateY(-2px)',
@@ -391,8 +460,8 @@ const CentralFundPool = () => {
                             label={source.category} 
                             size="small"
                             sx={{
-                              backgroundColor: alpha(source.category === 'Fundraising' ? '#2e7d32' : '#1976d2', 0.1),
-                              color: source.category === 'Fundraising' ? '#2e7d32' : '#1976d2'
+                              backgroundColor: alpha('#8b6cbc', 0.1),
+                              color: '#8b6cbc'
                             }}
                           />
                         </Stack>
@@ -401,49 +470,49 @@ const CentralFundPool = () => {
 
                     <Typography variant="h5" sx={{ 
                       fontWeight: 600, 
-                      color: source.category === 'Fundraising' ? '#2e7d32' : '#1976d2',
+                      color: '#8b6cbc',
                       mb: 2 
                     }}>
                       {formatCurrency(source.amount)}
                     </Typography>
 
-                    <Grid container spacing={2} sx={{ mb: 2 }}>
-                      <Grid item xs={6}>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                      <Box sx={{ flex: 1 }}>
                         <Typography variant="caption" color="text.secondary">
                           Available
                         </Typography>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {formatCurrency(source.available)}
                         </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
                         <Typography variant="caption" color="text.secondary">
                           Reserved
                         </Typography>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
                           {formatCurrency(source.reserved)}
                         </Typography>
-                      </Grid>
-                    </Grid>
+                      </Box>
+                    </Box>
 
                     <LinearProgress
                       variant="determinate"
-                      value={source.category === 'Fundraising' ? 100 : 100}
+                      value={100}
                       sx={{
                         height: 8,
                         borderRadius: 4,
-                        backgroundColor: alpha(source.category === 'Fundraising' ? '#2e7d32' : '#1976d2', 0.1),
+                        backgroundColor: alpha('#8b6cbc', 0.1),
                         '& .MuiLinearProgress-bar': {
-                          backgroundColor: source.category === 'Fundraising' ? '#2e7d32' : '#1976d2',
+                          backgroundColor: '#8b6cbc',
                           borderRadius: 4
                         }
                       }}
                     />
                   </CardContent>
                 </Card>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         </Paper>
       </Container>
     </>

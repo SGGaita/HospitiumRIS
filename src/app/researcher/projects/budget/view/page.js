@@ -295,7 +295,7 @@ const BudgetManagementPage = () => {
   };
 
   if (loading) {
-    return (
+  return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
         <CircularProgress />
       </Box>

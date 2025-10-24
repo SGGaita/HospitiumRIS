@@ -45,23 +45,30 @@ const formatPercentage = (value) => {
   return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
 };
 
-// Professional skeleton component
+// Professional skeleton component with flexbox
 const ProfessionalStatisticsSkeleton = memo(() => (
-  <Grid container spacing={3}>
+  <Box sx={{ 
+    display: 'flex', 
+    gap: 3, 
+    flexWrap: 'wrap',
+    '& > *': { 
+      flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', lg: '1 1 calc(33.333% - 16px)', xl: '1 1 calc(16.666% - 20px)' } 
+    }
+  }}>
     {[1, 2, 3, 4, 5, 6].map((index) => (
-      <Grid item xs={12} sm={6} lg={4} xl={2} key={index}>
-        <Card sx={{ 
-          borderRadius: 4, 
-          height: '180px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
-        }}>
-          <CardContent sx={{ p: 3 }}>
-            <Skeleton variant="rectangular" width="100%" height={140} sx={{ borderRadius: 2 }} />
-          </CardContent>
-        </Card>
-      </Grid>
+      <Card key={index} sx={{ 
+        borderRadius: 3, 
+        height: '120px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+        backgroundColor: '#8b6cbc',
+        color: 'white'
+      }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <Skeleton variant="rectangular" width="100%" height={80} sx={{ borderRadius: 2, bgcolor: 'rgba(255,255,255,0.1)' }} />
+        </CardContent>
+      </Card>
     ))}
-  </Grid>
+  </Box>
 ));
 
 // Enhanced statistic card component
@@ -91,32 +98,33 @@ const StatisticCard = memo(({ stat, index }) => {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       sx={{
-        borderRadius: 4,
-        height: '180px',
+        borderRadius: 3,
+        height: '120px',
         position: 'relative',
         overflow: 'hidden',
-        background: `linear-gradient(135deg, ${stat.color}15 0%, ${stat.color}05 100%)`,
-        border: `1px solid ${alpha(stat.color, 0.1)}`,
+        background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+        border: 'none',
         boxShadow: hover 
-          ? `0 8px 32px ${alpha(stat.color, 0.2)}`
-          : `0 4px 20px ${alpha(stat.color, 0.08)}`,
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+          ? '0 6px 20px rgba(139, 108, 188, 0.3)'
+          : '0 3px 12px rgba(139, 108, 188, 0.15)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
-        transform: hover ? 'translateY(-8px) scale(1.02)' : 'translateY(0) scale(1)',
+        transform: hover ? 'translateY(-3px) scale(1.01)' : 'translateY(0) scale(1)',
+        color: 'white',
         '&::before': {
           content: '""',
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          height: '4px',
-          background: `linear-gradient(90deg, ${stat.color}, ${alpha(stat.color, 0.6)})`,
+          height: '3px',
+          background: 'linear-gradient(90deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1))',
           transition: 'all 0.3s ease'
         }
       }}
     >
       <CardContent sx={{ 
-        p: 3, 
+        p: 2, 
         height: '100%', 
         display: 'flex', 
         flexDirection: 'column', 
@@ -124,75 +132,67 @@ const StatisticCard = memo(({ stat, index }) => {
         position: 'relative'
       }}>
         {/* Header with icon and info */}
-        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 2 }}>
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between" sx={{ mb: 1 }}>
           <Box
             sx={{
-              width: 48,
-              height: 48,
-              borderRadius: 3,
-              background: `linear-gradient(135deg, ${stat.color}, ${alpha(stat.color, 0.8)})`,
+              width: 36,
+              height: 36,
+              borderRadius: 2,
+              background: 'rgba(255, 255, 255, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: `0 4px 12px ${alpha(stat.color, 0.3)}`,
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               transition: 'all 0.3s ease'
             }}
           >
-            <stat.icon sx={{ fontSize: 24, color: 'white' }} />
+            <stat.icon sx={{ fontSize: 20, color: 'white' }} />
           </Box>
           <Tooltip title={`More info about ${stat.title}`}>
-            <IconButton size="small" sx={{ opacity: 0.6, '&:hover': { opacity: 1 } }}>
+            <IconButton size="small" sx={{ color: 'rgba(255,255,255,0.7)', '&:hover': { color: 'white' } }}>
               <InfoIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         </Stack>
 
         {/* Main value */}
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 1 }}>
           <Typography 
-            variant="h4" 
+            variant="h5" 
             sx={{ 
-              fontWeight: 800, 
-              color: theme.palette.text.primary,
-              fontSize: { xs: '1.5rem', sm: '1.8rem', lg: '2rem' },
+              fontWeight: 700, 
+              color: 'white',
+              fontSize: '1.3rem',
               lineHeight: 1.1,
-              mb: 0.5
+              mb: 0.25
             }}
           >
             {typeof stat.value === 'string' ? stat.value : formatNumber(stat.value)}
           </Typography>
           <Typography 
-            variant="subtitle1" 
+            variant="subtitle2" 
             sx={{ 
               fontWeight: 600, 
-              color: theme.palette.text.primary,
-              fontSize: '1rem',
-              mb: 0.5
+              color: 'white',
+              fontSize: '0.8rem',
+              opacity: 0.9
             }}
           >
             {stat.title}
-          </Typography>
-          <Typography 
-            variant="body2" 
-            sx={{ 
-              color: theme.palette.text.secondary,
-              fontSize: '0.875rem'
-            }}
-          >
-            {stat.subtitle}
           </Typography>
         </Box>
 
         {/* Trend and progress */}
         <Box>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-            <TrendIcon sx={{ fontSize: 16, color: trendColor }} />
+          <Stack direction="row" alignItems="center" spacing={0.5}>
+            <TrendIcon sx={{ fontSize: 14, color: 'rgba(255,255,255,0.9)' }} />
             <Typography 
               variant="body2" 
               sx={{ 
                 fontWeight: 600, 
-                color: trendColor,
-                fontSize: '0.75rem'
+                color: 'rgba(255,255,255,0.9)',
+                fontSize: '0.7rem'
               }}
             >
               {stat.trend}
@@ -200,8 +200,8 @@ const StatisticCard = memo(({ stat, index }) => {
             <Typography 
               variant="caption" 
               sx={{ 
-                color: theme.palette.text.secondary,
-                fontSize: '0.7rem'
+                color: 'rgba(255,255,255,0.7)',
+                fontSize: '0.65rem'
               }}
             >
               vs last period
@@ -209,30 +209,20 @@ const StatisticCard = memo(({ stat, index }) => {
           </Stack>
           
           {stat.progress !== undefined && (
-            <Box sx={{ mt: 1 }}>
+            <Box sx={{ mt: 0.5 }}>
               <LinearProgress
                 variant="determinate"
                 value={stat.progress}
                 sx={{
-                  height: 4,
+                  height: 3,
                   borderRadius: 2,
-                  backgroundColor: alpha(stat.color, 0.1),
+                  backgroundColor: 'rgba(255,255,255,0.2)',
                   '& .MuiLinearProgress-bar': {
                     borderRadius: 2,
-                    background: `linear-gradient(90deg, ${stat.color}, ${alpha(stat.color, 0.7)})`
+                    background: 'rgba(255,255,255,0.8)'
                   }
                 }}
               />
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: theme.palette.text.secondary,
-                  fontSize: '0.7rem',
-                  mt: 0.5
-                }}
-              >
-                {stat.progress.toFixed(0)}% of target
-              </Typography>
             </Box>
           )}
         </Box>
@@ -318,13 +308,23 @@ const ProfessionalStatisticsCards = memo(({ analyticsData, loading }) => {
         Key Performance Indicators
       </Typography>
       
-      <Grid container spacing={3}>
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 3, 
+        flexWrap: 'wrap',
+        '& > *': { 
+          flex: { 
+            xs: '1 1 100%', 
+            sm: '1 1 calc(50% - 12px)', 
+            lg: '1 1 calc(33.333% - 16px)', 
+            xl: '1 1 calc(16.666% - 20px)' 
+          } 
+        }
+      }}>
         {statistics.map((stat, index) => (
-          <Grid item xs={12} sm={6} lg={4} xl={2} key={index}>
-            <StatisticCard stat={stat} index={index} />
-          </Grid>
+          <StatisticCard key={index} stat={stat} index={index} />
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 });

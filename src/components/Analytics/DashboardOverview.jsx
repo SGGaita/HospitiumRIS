@@ -179,36 +179,50 @@ const DashboardOverview = memo(({ analyticsData, loading }) => {
       />
 
       {/* Charts Section */}
-      <Grid container spacing={4} sx={{ mb: 4 }}>
-        {/* Campaign Performance Chart */}
-        <Grid item xs={12} lg={8}>
-          <ProfessionalCampaignChart 
-            analyticsData={analyticsData} 
-            loading={loading} 
-          />
-        </Grid>
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 4, 
+          mb: 4,
+          flexWrap: 'wrap'
+        }}>
+          {/* Campaign Performance Chart */}
+          <Box sx={{ flex: { xs: '1 1 100%', lg: '2 2 calc(66.666% - 16px)' } }}>
+            <ProfessionalCampaignChart 
+              analyticsData={analyticsData} 
+              loading={loading} 
+            />
+          </Box>
 
-        {/* Category Distribution */}
-        <Grid item xs={12} lg={4}>
-          <ProfessionalCategoryChart 
-            analyticsData={analyticsData} 
-            loading={loading} 
-          />
-        </Grid>
+          {/* Category Distribution */}
+          <Box sx={{ flex: { xs: '1 1 100%', lg: '1 1 calc(33.333% - 16px)' } }}>
+            <ProfessionalCategoryChart 
+              analyticsData={analyticsData} 
+              loading={loading} 
+            />
+          </Box>
+        </Box>
 
         {/* Monthly Trends */}
-        <Grid item xs={12}>
+        <Box>
           <ProfessionalTrendsChart 
             analyticsData={analyticsData} 
             loading={loading} 
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       {/* Data Tables Section */}
-      <Grid container spacing={4}>
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 4, 
+        flexWrap: 'wrap',
+        '& > *': { 
+          flex: { xs: '1 1 100%', lg: '1 1 calc(50% - 16px)' } 
+        }
+      }}>
         {/* Top Donors Table */}
-        <Grid item xs={12} lg={6}>
+        <Box>
           <ProfessionalDataTable
             title="Top Donors"
             subtitle="Highest contributing donors by total donation amount"
@@ -220,10 +234,10 @@ const DashboardOverview = memo(({ analyticsData, loading }) => {
             onAction={handleAction}
             emptyMessage="No donor data available"
           />
-        </Grid>
+        </Box>
 
         {/* Campaign Performance Table */}
-        <Grid item xs={12} lg={6}>
+        <Box>
           <ProfessionalDataTable
             title="Campaign Performance"
             subtitle="Active and recent fundraising campaigns ranked by performance"
@@ -235,8 +249,8 @@ const DashboardOverview = memo(({ analyticsData, loading }) => {
             onAction={handleAction}
             emptyMessage="No campaign data available"
           />
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 });

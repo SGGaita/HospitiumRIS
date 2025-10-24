@@ -556,73 +556,134 @@ const GrantAwardsWon = () => {
       {/* Main Content */}
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Key Metrics Cards */}
-        <Grid container spacing={3} sx={{ mb: 5 }}>
-          <Grid item xs={12} sm={6} md={2}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <TrophyIcon sx={{ fontSize: 28, color: '#8b6cbc', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {totalAwards}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Total Awards
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <PlayArrowIcon sx={{ fontSize: 28, color: '#4caf50', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" color="success.main" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {activeAwards}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Active Projects
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <CheckCircleIcon sx={{ fontSize: 28, color: '#2196f3', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" color="info.main" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {completedAwards}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Completed
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <MoneyIcon sx={{ fontSize: 28, color: '#9c27b0', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.2rem', md: '1.5rem' } }}>
-                  {formatCurrency(totalValue)}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Total Award Value
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <AccountBalanceIcon sx={{ fontSize: 28, color: '#795548', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', md: '1.5rem' }, color: '#795548' }}>
-                  {formatCurrency(totalDisbursed)}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Funds Received
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 3, 
+          mb: 5, 
+          flexWrap: 'wrap',
+          '& > *': {
+            flex: {
+              xs: '1 1 100%',
+              sm: '1 1 calc(50% - 12px)',
+              md: '1 1 calc(20% - 19.2px)'
+            }
+          }
+        }}>
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <TrophyIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: 'white' }}>
+                {totalAwards}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Total Awards
+              </Typography>
+            </CardContent>
+          </Card>
+          
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <PlayArrowIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: 'white' }}>
+                {activeAwards}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Active Projects
+              </Typography>
+            </CardContent>
+          </Card>
+          
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <CheckCircleIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' }, color: 'white' }}>
+                {completedAwards}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Completed
+              </Typography>
+            </CardContent>
+          </Card>
+          
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <MoneyIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', md: '1.5rem' }, color: 'white' }}>
+                {formatCurrency(totalValue)}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Total Award Value
+              </Typography>
+            </CardContent>
+          </Card>
+          
+          <Card sx={{ 
+            borderRadius: 3, 
+            boxShadow: 2, 
+            height: 120,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 8px 25px rgba(139, 108, 188, 0.3)'
+            }
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <AccountBalanceIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.2rem', md: '1.5rem' }, color: 'white' }}>
+                {formatCurrency(totalDisbursed)}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Funds Received
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
 
         {/* Search and Filters */}
         <Paper sx={{ borderRadius: 3, p: 3, mb: 3 }}>
@@ -1112,7 +1173,7 @@ const GrantAwardsWon = () => {
                               borderColor: '#8b6cbc',
                               color: '#8b6cbc',
                               '&:hover': {
-                                borderColor: '#f57c00',
+                                borderColor: '#7b5cac',
                                 backgroundColor: alpha('#8b6cbc', 0.08)
                               }
                             }}
@@ -1123,11 +1184,11 @@ const GrantAwardsWon = () => {
                             variant="outlined"
                             startIcon={<EditIcon />}
                             sx={{
-                              borderColor: '#2196f3',
-                              color: '#2196f3',
+                              borderColor: '#8b6cbc',
+                              color: '#8b6cbc',
                               '&:hover': {
-                                borderColor: '#1976d2',
-                                backgroundColor: alpha('#2196f3', 0.08)
+                                borderColor: '#7b5cac',
+                                backgroundColor: alpha('#8b6cbc', 0.08)
                               }
                             }}
                           >
@@ -1138,7 +1199,7 @@ const GrantAwardsWon = () => {
                             startIcon={<DownloadIcon />}
                             sx={{
                               backgroundColor: '#8b6cbc',
-                              '&:hover': { backgroundColor: '#f57c00' }
+                              '&:hover': { backgroundColor: '#7b5cac' }
                             }}
                           >
                             Generate Report
@@ -1158,11 +1219,22 @@ const GrantAwardsWon = () => {
                     Track project milestones, deliverables, and timeline management for all active awards.
                   </Typography>
                 </Alert>
-                <Grid container spacing={4}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 4, 
+                  flexWrap: 'wrap',
+                  '& > *': {
+                    flex: {
+                      xs: '1 1 100%',
+                      md: '1 1 calc(50% - 16px)',
+                      lg: '1 1 calc(33.333% - 21.33px)'
+                    }
+                  }
+                }}>
                   {milestones.map((milestone) => {
                     const award = awards.find(a => a.id === milestone.awardId);
                     return (
-                      <Grid item xs={12} md={6} lg={4} key={milestone.id}>
+                      <Box key={milestone.id}>
                         <Card sx={{ 
                           borderRadius: 3, 
                           boxShadow: 2,
@@ -1225,7 +1297,7 @@ const GrantAwardsWon = () => {
                                   borderColor: '#8b6cbc',
                                   color: '#8b6cbc',
                                   '&:hover': {
-                                    borderColor: '#f57c00',
+                                    borderColor: '#7b5cac',
                                     backgroundColor: alpha('#8b6cbc', 0.08)
                                   }
                                 }}
@@ -1238,8 +1310,8 @@ const GrantAwardsWon = () => {
                                   size="small"
                                   startIcon={<CheckCircleIcon />}
                                   sx={{
-                                    backgroundColor: '#4caf50',
-                                    '&:hover': { backgroundColor: '#388e3c' }
+                                    backgroundColor: '#8b6cbc',
+                                    '&:hover': { backgroundColor: '#7b5cac' }
                                   }}
                                 >
                                   Complete
@@ -1248,10 +1320,10 @@ const GrantAwardsWon = () => {
                             </Stack>
                           </CardContent>
                         </Card>
-                      </Grid>
+                      </Box>
                     );
                   })}
-                </Grid>
+                </Box>
               </Box>
             )}
 
@@ -1263,8 +1335,18 @@ const GrantAwardsWon = () => {
                   </Typography>
                 </Alert>
                 
-                <Grid container spacing={4}>
-                  <Grid item xs={12} md={6}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    gap: 4, 
+                    flexWrap: 'wrap',
+                    '& > *': {
+                      flex: {
+                        xs: '1 1 100%',
+                        md: '1 1 calc(50% - 16px)'
+                      }
+                    }
+                  }}>
                     <Card sx={{ borderRadius: 3, boxShadow: 2, p: 4, height: 400, border: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="h6" sx={{ mb: 4, fontSize: '1.25rem' }}>
                         Budget Utilization Overview
@@ -1280,9 +1362,7 @@ const GrantAwardsWon = () => {
                         <AssessmentIcon sx={{ fontSize: 120, color: alpha('#8b6cbc', 0.3) }} />
                       </Box>
                     </Card>
-                  </Grid>
 
-                  <Grid item xs={12} md={6}>
                     <Card sx={{ borderRadius: 3, boxShadow: 2, p: 4, height: 400, border: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="h6" sx={{ mb: 4, fontSize: '1.25rem' }}>
                         Funding Timeline
@@ -1292,15 +1372,15 @@ const GrantAwardsWon = () => {
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'center',
-                        backgroundColor: alpha('#2196f3', 0.05),
+                        backgroundColor: alpha('#8b6cbc', 0.05),
                         borderRadius: 2
                       }}>
-                        <TimelineIcon sx={{ fontSize: 120, color: alpha('#2196f3', 0.3) }} />
+                        <TimelineIcon sx={{ fontSize: 120, color: alpha('#8b6cbc', 0.3) }} />
                       </Box>
                     </Card>
-                  </Grid>
+                  </Box>
 
-                  <Grid item xs={12}>
+                  <Box>
                     <Card sx={{ borderRadius: 3, boxShadow: 2, p: 4, border: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="h6" sx={{ mb: 4, fontSize: '1.25rem' }}>
                         Financial Summary by Award
@@ -1380,8 +1460,8 @@ const GrantAwardsWon = () => {
                         </Table>
                       </TableContainer>
                     </Card>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               </Box>
             )}
 
@@ -1617,7 +1697,7 @@ const GrantAwardsWon = () => {
             sx={{ 
               backgroundColor: '#8b6cbc',
               borderRadius: 2,
-              '&:hover': { backgroundColor: '#f57c00' }
+              '&:hover': { backgroundColor: '#7b5cac' }
             }}
           >
             {saving ? 'Creating...' : 'Create Milestone'}

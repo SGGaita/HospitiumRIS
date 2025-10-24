@@ -142,51 +142,15 @@ const GrantWritingPortal = () => {
           lastUpdated: '2024-01-15',
           description: 'Comprehensive research proposal for AI applications in healthcare diagnostics and treatment optimization.',
           collaborators: ['Dr. Sarah Johnson', 'Dr. Michael Chen', 'Dr. Emily Rodriguez']
-        },
-        {
-          id: 2,
-          title: 'Community Health Outreach Program',
-          grantor: 'CDC Foundation',
-          deadline: '2024-02-28',
-          amount: 750000,
-          category: 'Program Grant',
-          status: 'review',
-          progress: 90,
-          assignedTo: 'Dr. Michael Chen',
-          priority: 'medium',
-          lastUpdated: '2024-01-20',
-          description: 'Proposal for expanding community health services in underserved areas.',
-          collaborators: ['Dr. Michael Chen', 'Dr. Lisa Wang']
-        },
-        {
-          id: 3,
-          title: 'Medical Education Technology Platform',
-          grantor: 'Gates Foundation',
-          deadline: '2024-04-10',
-          amount: 1200000,
-          category: 'Technology Grant',
-          status: 'draft',
-          progress: 25,
-          assignedTo: 'Dr. Emily Rodriguez',
-          priority: 'low',
-          lastUpdated: '2024-01-10',
-          description: 'Development of innovative medical education platform using VR and AI technologies.',
-          collaborators: ['Dr. Emily Rodriguez', 'Dr. James Wilson']
         }
       ]);
 
       setTemplates([
-        { id: 1, name: 'NIH R01 Template', category: 'Research', downloads: 45 },
-        { id: 2, name: 'NSF Standard Template', category: 'Research', downloads: 32 },
-        { id: 3, name: 'Foundation Program Template', category: 'Program', downloads: 28 },
-        { id: 4, name: 'Corporate Partnership Template', category: 'Partnership', downloads: 19 }
+        { id: 1, name: 'NIH R01 Template', category: 'Research', downloads: 45 }
       ]);
 
       setCollaborators([
-        { id: 1, name: 'Dr. Sarah Johnson', role: 'Principal Investigator', expertise: 'AI & Machine Learning', affiliation: 'Hospitium Research Institute' },
-        { id: 2, name: 'Dr. Michael Chen', role: 'Co-Investigator', expertise: 'Public Health', affiliation: 'Community Health Center' },
-        { id: 3, name: 'Dr. Emily Rodriguez', role: 'Research Coordinator', expertise: 'Medical Education', affiliation: 'Medical School' },
-        { id: 4, name: 'Dr. James Wilson', role: 'Technical Advisor', expertise: 'Healthcare Technology', affiliation: 'Tech Innovation Lab' }
+        { id: 1, name: 'Dr. Sarah Johnson', role: 'Principal Investigator', expertise: 'AI & Machine Learning', affiliation: 'Hospitium Research Institute' }
       ]);
 
     } catch (error) {
@@ -352,56 +316,99 @@ const GrantWritingPortal = () => {
       {/* Main Content */}
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Statistics Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-              <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                <Typography variant="h4" fontWeight="bold" color="primary">
-                  {totalProposals}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary">
-                  Total Proposals
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-              <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                <Typography variant="h4" fontWeight="bold" color="warning.main">
-                  {activeProposals}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary">
-                  In Progress
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-              <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                <Typography variant="h4" fontWeight="bold" color="success.main">
-                  {submittedProposals}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary">
-                  Submitted
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2 }}>
-              <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                <Typography variant="h4" fontWeight="bold" color="success.main">
-                  {formatCurrency(totalValue)}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary">
-                  Total Value
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 3, 
+          mb: 4,
+          flexWrap: 'wrap',
+          '& > *': { 
+            flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', lg: '1 1 calc(25% - 18px)' } 
+          }
+        }}>
+          <Card sx={{ 
+            borderRadius: 3, 
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="h4" fontWeight="bold" color="white">
+                {totalProposals}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                Total Proposals
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ 
+            borderRadius: 3, 
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="h4" fontWeight="bold" color="white">
+                {activeProposals}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                In Progress
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ 
+            borderRadius: 3, 
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="h4" fontWeight="bold" color="white">
+                {submittedProposals}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                Submitted
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ 
+            borderRadius: 3, 
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="h4" fontWeight="bold" color="white">
+                {formatCurrency(totalValue)}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+                Total Value
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
 
         {/* Search and Filters */}
         <Paper sx={{ borderRadius: 3, p: 3, mb: 3 }}>
@@ -482,10 +489,16 @@ const GrantWritingPortal = () => {
           {/* Tab Content */}
           <Box sx={{ p: 3 }}>
             {selectedTab === 0 && (
-              <Grid container spacing={3}>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 3, 
+                flexWrap: 'wrap',
+                '& > *': { 
+                  flex: { xs: '1 1 100%', lg: '1 1 calc(50% - 12px)' } 
+                }
+              }}>
                 {proposals.map((proposal) => (
-                  <Grid item xs={12} lg={6} key={proposal.id}>
-                    <Card sx={{ 
+                    <Card key={proposal.id} sx={{ 
                       borderRadius: 3, 
                       boxShadow: 2,
                       border: `2px solid ${alpha('#8b6cbc', 0.1)}`,
@@ -611,23 +624,28 @@ const GrantWritingPortal = () => {
                         </Stack>
                       </CardContent>
                     </Card>
-                  </Grid>
                 ))}
-              </Grid>
+              </Box>
             )}
 
             {selectedTab === 1 && (
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
-                    <Typography variant="body2">
-                      Access pre-formatted templates for different types of grant proposals. Templates include standard sections, formatting guidelines, and best practices.
-                    </Typography>
-                  </Alert>
-                </Grid>
-                {templates.map((template) => (
-                  <Grid item xs={12} sm={6} md={4} key={template.id}>
-                    <Card sx={{ 
+              <Box>
+                <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+                  <Typography variant="body2">
+                    Access pre-formatted templates for different types of grant proposals. Templates include standard sections, formatting guidelines, and best practices.
+                  </Typography>
+                </Alert>
+                
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 3, 
+                  flexWrap: 'wrap',
+                  '& > *': { 
+                    flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(33.333% - 16px)' } 
+                  }
+                }}>
+                  {templates.map((template) => (
+                    <Card key={template.id} sx={{ 
                       borderRadius: 3, 
                       boxShadow: 2,
                       '&:hover': { boxShadow: 4, transform: 'translateY(-2px)' },
@@ -662,9 +680,9 @@ const GrantWritingPortal = () => {
                         </Button>
                       </CardContent>
                     </Card>
-                  </Grid>
-                ))}
-              </Grid>
+                  ))}
+                </Box>
+              </Box>
             )}
 
             {selectedTab === 2 && (

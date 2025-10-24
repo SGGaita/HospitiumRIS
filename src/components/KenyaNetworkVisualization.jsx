@@ -1541,21 +1541,21 @@ const KenyaNetworkVisualization = () => {
                     
                     {!selectedNode.isLead && (
                       <>
-                        <Chip 
-                          size="small" 
-                          label={`${selectedNode.collaborationLevel?.charAt(0).toUpperCase() + selectedNode.collaborationLevel?.slice(1)} Collaborator`}
-                          sx={{ 
-                            bgcolor: (() => {
-                              switch (selectedNode.collaborationLevel) {
-                                case 'direct': return 'rgba(139, 108, 188, 0.2)';
-                                case 'secondary': return 'rgba(229, 57, 53, 0.2)';
-                                default: return 'rgba(120, 144, 156, 0.2)';
-                              }
-                            })(),
-                            color: getNodeColor(selectedNode),
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            border: `1px solid ${getNodeColor(selectedNode)}30`
+                      <Chip 
+                        size="small" 
+                        label={`${selectedNode.collaborationLevel?.charAt(0).toUpperCase() + selectedNode.collaborationLevel?.slice(1)} Collaborator`}
+                        sx={{ 
+                          bgcolor: (() => {
+                            switch (selectedNode.collaborationLevel) {
+                              case 'direct': return 'rgba(139, 108, 188, 0.2)';
+                              case 'secondary': return 'rgba(229, 57, 53, 0.2)';
+                              default: return 'rgba(120, 144, 156, 0.2)';
+                            }
+                          })(),
+                          color: getNodeColor(selectedNode),
+                          fontWeight: 700,
+                          fontSize: '0.75rem',
+                          border: `1px solid ${getNodeColor(selectedNode)}30`
                           }} 
                         />
                         {selectedNode.isPending && (
@@ -1746,22 +1746,22 @@ const KenyaNetworkVisualization = () => {
                     
                     {/* Manuscripts */}
                     {selectedNode.manuscripts_count > 0 && (
-                      <Card elevation={1} sx={{ 
-                        p: 2, 
-                        backgroundColor: 'rgba(139, 108, 188, 0.08)',
-                        border: '1px solid rgba(139, 108, 188, 0.2)',
-                        borderRadius: 2,
-                        textAlign: 'center'
+                    <Card elevation={1} sx={{ 
+                      p: 2, 
+                      backgroundColor: 'rgba(139, 108, 188, 0.08)',
+                      border: '1px solid rgba(139, 108, 188, 0.2)',
+                      borderRadius: 2,
+                      textAlign: 'center'
+                    }}>
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: 700, 
+                        color: KENYA_COLORS.direct,
+                        mb: 0.5
                       }}>
-                        <Typography variant="h6" sx={{ 
-                          fontWeight: 700, 
-                          color: KENYA_COLORS.direct,
-                          mb: 0.5
-                        }}>
                           {selectedNode.manuscripts_count}
-                        </Typography>
-                        <Typography variant="caption" sx={{ 
-                          color: KENYA_COLORS.direct,
+                      </Typography>
+                      <Typography variant="caption" sx={{ 
+                        color: KENYA_COLORS.direct,
                           fontWeight: 600,
                           fontSize: '0.75rem'
                         }}>

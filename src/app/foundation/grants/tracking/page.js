@@ -474,11 +474,11 @@ const GrantTracking = () => {
             { label: 'Grants', path: '/foundation/grants' },
             { label: 'Tracking' }
           ]}
-          gradient="linear-gradient(135deg, #e91e63 0%, #f06292 50%, #f8bbd9 100%)"
+          gradient="linear-gradient(135deg, #8b6cbc 0%, #a084d1 50%, #b794f4 100%)"
         />
         <Container maxWidth="xl" sx={{ py: 4 }}>
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-            <CircularProgress size={60} sx={{ color: '#e91e63' }} />
+            <CircularProgress size={60} sx={{ color: '#8b6cbc' }} />
           </Box>
         </Container>
       </Box>
@@ -498,7 +498,7 @@ const GrantTracking = () => {
             { label: 'Grants', path: '/foundation/grants' },
             { label: 'Tracking' }
           ]}
-          gradient="linear-gradient(135deg, #e91e63 0%, #f06292 50%, #f8bbd9 100%)"
+          gradient="linear-gradient(135deg, #8b6cbc 0%, #a084d1 50%, #b794f4 100%)"
           actionButton={
             <Stack direction="row" spacing={2}>
               <Button
@@ -540,132 +540,201 @@ const GrantTracking = () => {
       {/* Main Content */}
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Key Metrics Cards */}
-        <Grid container spacing={3} sx={{ mb: 5 }}>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <AssignmentIcon sx={{ fontSize: 28, color: '#e91e63', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {totalApplications}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Total Applications
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <PendingIcon sx={{ fontSize: 28, color: '#ff9800', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" color="warning.main" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {activeApplications}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Active Reviews
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <CheckCircleIcon sx={{ fontSize: 28, color: '#4caf50', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" color="success.main" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {awardedApplications}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Awards Won
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <TrendingUpIcon sx={{ fontSize: 28, color: '#2196f3', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" color="primary" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {formatCurrency(totalValue)}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Total Value
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
-            <Card sx={{ borderRadius: 3, boxShadow: 2, height: 140 }}>
-              <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                <NotificationIcon sx={{ fontSize: 28, color: '#f44336', mb: 1 }} />
-                <Typography variant="h4" fontWeight="bold" color="error.main" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
-                  {pendingTasks}
-                </Typography>
-                <Typography variant="subtitle1" color="text.secondary" sx={{ fontSize: '1rem' }}>
-                  Urgent Tasks
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 3, 
+          mb: 5,
+          flexWrap: 'wrap',
+          '& > *': { 
+            flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(20% - 19.2px)' } 
+          }
+        }}>
+          <Card sx={{ 
+            borderRadius: 3, 
+            height: 140,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <AssignmentIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" color="white" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                {totalApplications}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Total Applications
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ 
+            borderRadius: 3, 
+            height: 140,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <PendingIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" color="white" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                {activeApplications}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Active Reviews
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ 
+            borderRadius: 3, 
+            height: 140,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <CheckCircleIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" color="white" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                {awardedApplications}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Awards Won
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ 
+            borderRadius: 3, 
+            height: 140,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <TrendingUpIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" color="white" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                {formatCurrency(totalValue)}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Total Value
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card sx={{ 
+            borderRadius: 3, 
+            height: 140,
+            background: 'linear-gradient(135deg, #8b6cbc 0%, #7b5cac 100%)',
+            color: 'white',
+            boxShadow: '0 3px 12px rgba(139, 108, 188, 0.15)',
+            '&:hover': {
+              transform: 'translateY(-3px)',
+              boxShadow: '0 6px 20px rgba(139, 108, 188, 0.3)'
+            },
+            transition: 'all 0.3s ease'
+          }}>
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <NotificationIcon sx={{ fontSize: 28, color: 'rgba(255,255,255,0.9)', mb: 1 }} />
+              <Typography variant="h4" fontWeight="bold" color="white" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
+                {pendingTasks}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.9)' }}>
+                Urgent Tasks
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
 
         {/* Search and Filters */}
         <Paper sx={{ borderRadius: 3, p: 4, mb: 5 }}>
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                placeholder="Search applications by title, grantor, or PI..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: 'text.secondary' }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  },
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <FormControl fullWidth size="medium">
-                <InputLabel>Filter by Status</InputLabel>
-                <Select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  label="Filter by Status"
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="all">All Status</MenuItem>
-                  <MenuItem value="submitted">Submitted</MenuItem>
-                  <MenuItem value="under_review">Under Review</MenuItem>
-                  <MenuItem value="pending_documents">Pending Documents</MenuItem>
-                  <MenuItem value="awarded">Awarded</MenuItem>
-                  <MenuItem value="rejected">Rejected</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <FormControl fullWidth size="medium">
-                <InputLabel>Filter by Priority</InputLabel>
-                <Select
-                  value={filterPriority}
-                  onChange={(e) => setFilterPriority(e.target.value)}
-                  label="Filter by Priority"
-                  sx={{ borderRadius: 2 }}
-                >
-                  <MenuItem value="all">All Priorities</MenuItem>
-                  <MenuItem value="high">High Priority</MenuItem>
-                  <MenuItem value="medium">Medium Priority</MenuItem>
-                  <MenuItem value="low">Low Priority</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 4, 
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            '& > *': { 
+              flex: { xs: '1 1 100%', md: '1 1 calc(50% - 16px)' } 
+            },
+            '& > *:first-of-type': { 
+              flex: { xs: '1 1 100%', md: '1 1 calc(50% - 16px)' } 
+            },
+            '& > *:nth-of-type(2)': { 
+              flex: { xs: '1 1 100%', md: '1 1 calc(25% - 16px)' } 
+            },
+            '& > *:nth-of-type(3)': { 
+              flex: { xs: '1 1 100%', md: '1 1 calc(25% - 16px)' } 
+            }
+          }}>
+            <TextField
+              placeholder="Search applications by title, grantor, or PI..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+            
+            <FormControl size="medium">
+              <InputLabel>Filter by Status</InputLabel>
+              <Select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                label="Filter by Status"
+                sx={{ borderRadius: 2 }}
+              >
+                <MenuItem value="all">All Status</MenuItem>
+                <MenuItem value="submitted">Submitted</MenuItem>
+                <MenuItem value="under_review">Under Review</MenuItem>
+                <MenuItem value="pending_documents">Pending Documents</MenuItem>
+                <MenuItem value="awarded">Awarded</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+              </Select>
+            </FormControl>
+            
+            <FormControl size="medium">
+              <InputLabel>Filter by Priority</InputLabel>
+              <Select
+                value={filterPriority}
+                onChange={(e) => setFilterPriority(e.target.value)}
+                label="Filter by Priority"
+                sx={{ borderRadius: 2 }}
+              >
+                <MenuItem value="all">All Priorities</MenuItem>
+                <MenuItem value="high">High Priority</MenuItem>
+                <MenuItem value="medium">Medium Priority</MenuItem>
+                <MenuItem value="low">Low Priority</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
         </Paper>
 
         {/* Main Content Tabs */}
@@ -674,17 +743,17 @@ const GrantTracking = () => {
             value={selectedTab}
             onChange={handleTabChange}
             sx={{
-              backgroundColor: alpha('#e91e63', 0.05),
+              backgroundColor: alpha('#8b6cbc', 0.05),
               p: 4,
               '& .MuiTab-root': {
                 fontWeight: 600,
                 fontSize: '1rem',
                 '&.Mui-selected': {
-                  color: '#e91e63'
+                  color: '#8b6cbc'
                 }
               },
               '& .MuiTabs-indicator': {
-                backgroundColor: '#e91e63',
+                backgroundColor: '#8b6cbc',
                 height: 3
               }
             }}
@@ -698,13 +767,16 @@ const GrantTracking = () => {
           {/* Tab Content */}
           <Box sx={{ p: 4 }}>
             {selectedTab === 0 && (
-              <Grid container spacing={4}>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 4, 
+                flexDirection: 'column'
+              }}>
                 {applications.map((application) => (
-                  <Grid item xs={12} key={application.id}>
                     <Card sx={{ 
                       borderRadius: 3, 
                       boxShadow: 2,
-                      border: `2px solid ${alpha('#e91e63', 0.1)}`,
+                      border: `2px solid ${alpha('#8b6cbc', 0.1)}`,
                       '&:hover': {
                         boxShadow: 4,
                         transform: 'translateY(-2px)',
@@ -739,8 +811,8 @@ const GrantTracking = () => {
                                     label={application.stage} 
                                     size="small"
                                     sx={{
-                                      backgroundColor: alpha('#e91e63', 0.1),
-                                      color: '#e91e63'
+                                      backgroundColor: alpha('#8b6cbc', 0.1),
+                                      color: '#8b6cbc'
                                     }}
                                   />
                                 </Stack>
@@ -750,7 +822,7 @@ const GrantTracking = () => {
                                   <IconButton 
                                     size="small" 
                                     onClick={() => handleViewApplication(application)}
-                                    sx={{ color: '#e91e63' }}
+                                    sx={{ color: '#8b6cbc' }}
                                   >
                                     <ViewIcon />
                                   </IconButton>
@@ -826,9 +898,9 @@ const GrantTracking = () => {
                                 sx={{ 
                                   height: 8, 
                                   borderRadius: 4,
-                                  backgroundColor: alpha('#e91e63', 0.1),
+                                  backgroundColor: alpha('#8b6cbc', 0.1),
                                   '& .MuiLinearProgress-bar': {
-                                    backgroundColor: '#e91e63',
+                                    backgroundColor: '#8b6cbc',
                                     borderRadius: 4
                                   }
                                 }} 
@@ -844,9 +916,9 @@ const GrantTracking = () => {
                           <Grid item xs={12} md={4}>
                             <Box sx={{ 
                               p: 3, 
-                              backgroundColor: alpha('#e91e63', 0.05),
+                              backgroundColor: alpha('#8b6cbc', 0.05),
                               borderRadius: 2,
-                              border: `1px solid ${alpha('#e91e63', 0.1)}`,
+                              border: `1px solid ${alpha('#8b6cbc', 0.1)}`,
                               mb: 3
                             }}>
                               <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
@@ -889,7 +961,7 @@ const GrantTracking = () => {
                                       <Box>
                                         <Typography variant="body2" sx={{ 
                                           fontWeight: step.status === 'in_progress' ? 600 : 400,
-                                          color: step.status === 'in_progress' ? '#e91e63' : 'text.primary'
+                                          color: step.status === 'in_progress' ? '#8b6cbc' : 'text.primary'
                                         }}>
                                           {step.stage}
                                         </Typography>
@@ -906,9 +978,8 @@ const GrantTracking = () => {
                         </Grid>
                       </CardContent>
                     </Card>
-                  </Grid>
                 ))}
-              </Grid>
+              </Box>
             )}
 
             {selectedTab === 1 && (
@@ -921,7 +992,7 @@ const GrantTracking = () => {
                 <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: 2, border: '1px solid', borderColor: 'divider' }}>
                   <Table>
                     <TableHead>
-                      <TableRow sx={{ backgroundColor: alpha('#e91e63', 0.05) }}>
+                      <TableRow sx={{ backgroundColor: alpha('#8b6cbc', 0.05) }}>
                         <TableCell sx={{ fontWeight: 600, fontSize: '1rem' }}>Date</TableCell>
                         <TableCell sx={{ fontWeight: 600, fontSize: '1rem' }}>Application</TableCell>
                         <TableCell sx={{ fontWeight: 600, fontSize: '1rem' }}>Type</TableCell>
@@ -949,8 +1020,8 @@ const GrantTracking = () => {
                               label={comm.type} 
                               size="small"
                               sx={{
-                                backgroundColor: alpha('#e91e63', 0.1),
-                                color: '#e91e63',
+                                backgroundColor: alpha('#8b6cbc', 0.1),
+                                color: '#8b6cbc',
                                 fontWeight: 500
                               }}
                             />
@@ -973,7 +1044,7 @@ const GrantTracking = () => {
                           <TableCell>
                             <Stack direction="row" spacing={1}>
                               <Tooltip title="View Details">
-                                <IconButton size="small" sx={{ color: '#e91e63' }}>
+                                <IconButton size="small" sx={{ color: '#8b6cbc' }}>
                                   <ViewIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
@@ -999,10 +1070,16 @@ const GrantTracking = () => {
                     <strong>{pendingTasks} urgent tasks</strong> require attention within the next 7 days. Stay on top of deadlines to maintain good relationships with funding organizations.
                   </Typography>
                 </Alert>
-                <Grid container spacing={4}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 4, 
+                  flexWrap: 'wrap',
+                  '& > *': { 
+                    flex: { xs: '1 1 100%', md: '1 1 calc(50% - 16px)', lg: '1 1 calc(33.333% - 21.333px)' } 
+                  }
+                }}>
                   {upcomingTasks.map((task) => (
-                    <Grid item xs={12} md={6} lg={4} key={task.id}>
-                      <Card sx={{ 
+                      <Card key={task.id} sx={{ 
                         borderRadius: 3, 
                         boxShadow: 2,
                         border: `2px solid ${alpha(getPriorityColor(task.priority) === 'error' ? '#f44336' : getPriorityColor(task.priority) === 'warning' ? '#ff9800' : '#4caf50', 0.2)}`,
@@ -1061,9 +1138,8 @@ const GrantTracking = () => {
                           </Stack>
                         </CardContent>
                       </Card>
-                    </Grid>
                   ))}
-                </Grid>
+                </Box>
               </Box>
             )}
 
@@ -1075,13 +1151,16 @@ const GrantTracking = () => {
                   </Typography>
                 </Alert>
                 
-                <Grid container spacing={4}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 4, 
+                  flexDirection: 'column'
+                }}>
                   {applications.map((application) => (
-                    <Grid item xs={12} key={application.id}>
-                      <Card sx={{ 
+                      <Card key={application.id} sx={{ 
                         borderRadius: 3, 
                         boxShadow: 2,
-                        border: `1px solid ${alpha('#e91e63', 0.2)}`,
+                        border: `1px solid ${alpha('#8b6cbc', 0.2)}`,
                         mb: 3
                       }}>
                         <CardContent sx={{ p: 4 }}>
@@ -1098,14 +1177,14 @@ const GrantTracking = () => {
                                     '& .MuiStepLabel-label': {
                                       fontSize: '0.9rem',
                                       fontWeight: step.status === 'in_progress' ? 600 : 400,
-                                      color: step.status === 'in_progress' ? '#e91e63' : 'text.primary'
+                                      color: step.status === 'in_progress' ? '#8b6cbc' : 'text.primary'
                                     }
                                   }}
                                 >
                                   <Box sx={{ textAlign: 'center' }}>
                                     <Typography variant="body2" sx={{ 
                                       fontWeight: step.status === 'in_progress' ? 600 : 400,
-                                      color: step.status === 'in_progress' ? '#e91e63' : 'text.primary'
+                                      color: step.status === 'in_progress' ? '#8b6cbc' : 'text.primary'
                                     }}>
                                       {step.stage}
                                     </Typography>
@@ -1119,9 +1198,8 @@ const GrantTracking = () => {
                           </Stepper>
                         </CardContent>
                       </Card>
-                    </Grid>
                   ))}
-                </Grid>
+                </Box>
               </Box>
             )}
           </Box>
@@ -1142,7 +1220,7 @@ const GrantTracking = () => {
         }}
       >
         <DialogTitle sx={{
-          background: 'linear-gradient(135deg, #e91e63 0%, #f06292 100%)',
+          background: 'linear-gradient(135deg, #8b6cbc 0%, #a084d1 100%)',
           color: 'white',
           py: 3
         }}>
@@ -1244,7 +1322,7 @@ const GrantTracking = () => {
             onClick={() => setNewCommunicationDialog(false)}
             variant="outlined"
             disabled={saving}
-            sx={{ borderRadius: 2, borderColor: '#e91e63', color: '#e91e63' }}
+            sx={{ borderRadius: 2, borderColor: '#8b6cbc', color: '#8b6cbc' }}
           >
             Cancel
           </Button>
@@ -1254,9 +1332,9 @@ const GrantTracking = () => {
             disabled={saving || !communicationForm.applicationId || !communicationForm.subject || !communicationForm.message}
             startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
             sx={{ 
-              backgroundColor: '#e91e63',
+              backgroundColor: '#8b6cbc',
               borderRadius: 2,
-              '&:hover': { backgroundColor: '#c2185b' }
+              '&:hover': { backgroundColor: '#7b5cac' }
             }}
           >
             {saving ? 'Logging...' : 'Log Communication'}
@@ -1278,7 +1356,7 @@ const GrantTracking = () => {
         }}
       >
         <DialogTitle sx={{
-          background: 'linear-gradient(135deg, #e91e63 0%, #f06292 100%)',
+          background: 'linear-gradient(135deg, #8b6cbc 0%, #a084d1 100%)',
           color: 'white',
           py: 3,
           display: 'flex',
@@ -1368,9 +1446,9 @@ const GrantTracking = () => {
                 </Typography>
                 <Box sx={{ 
                   p: 3, 
-                  backgroundColor: alpha('#e91e63', 0.05),
+                  backgroundColor: alpha('#8b6cbc', 0.05),
                   borderRadius: 2,
-                  border: `1px solid ${alpha('#e91e63', 0.1)}`,
+                  border: `1px solid ${alpha('#8b6cbc', 0.1)}`,
                   mb: 3
                 }}>
                   <Grid container spacing={2}>
@@ -1409,14 +1487,14 @@ const GrantTracking = () => {
                           '& .MuiStepLabel-label': {
                             fontSize: '0.9rem',
                             fontWeight: step.status === 'in_progress' ? 600 : 400,
-                            color: step.status === 'in_progress' ? '#e91e63' : 'text.primary'
+                            color: step.status === 'in_progress' ? '#8b6cbc' : 'text.primary'
                           }
                         }}
                       >
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="body2" sx={{ 
                             fontWeight: step.status === 'in_progress' ? 600 : 400,
-                            color: step.status === 'in_progress' ? '#e91e63' : 'text.primary'
+                            color: step.status === 'in_progress' ? '#8b6cbc' : 'text.primary'
                           }}>
                             {step.stage}
                           </Typography>
@@ -1437,9 +1515,9 @@ const GrantTracking = () => {
                   </Typography>
                   <Typography variant="body2" sx={{ 
                     p: 2, 
-                    backgroundColor: alpha('#e91e63', 0.05),
+                    backgroundColor: alpha('#8b6cbc', 0.05),
                     borderRadius: 2,
-                    border: `1px solid ${alpha('#e91e63', 0.1)}`
+                    border: `1px solid ${alpha('#8b6cbc', 0.1)}`
                   }}>
                     {selectedApplication.notes}
                   </Typography>
@@ -1464,7 +1542,7 @@ const GrantTracking = () => {
         }}
       >
         <DialogTitle sx={{
-          background: 'linear-gradient(135deg, #e91e63 0%, #f06292 100%)',
+          background: 'linear-gradient(135deg, #8b6cbc 0%, #a084d1 100%)',
           color: 'white',
           py: 3
         }}>
@@ -1535,7 +1613,7 @@ const GrantTracking = () => {
             onClick={() => setUpdateStatusDialog(false)}
             variant="outlined"
             disabled={saving}
-            sx={{ borderRadius: 2, borderColor: '#e91e63', color: '#e91e63' }}
+            sx={{ borderRadius: 2, borderColor: '#8b6cbc', color: '#8b6cbc' }}
           >
             Cancel
           </Button>
@@ -1545,9 +1623,9 @@ const GrantTracking = () => {
             disabled={saving || !statusForm.status}
             startIcon={saving ? <CircularProgress size={16} /> : <SaveIcon />}
             sx={{ 
-              backgroundColor: '#e91e63',
+              backgroundColor: '#8b6cbc',
               borderRadius: 2,
-              '&:hover': { backgroundColor: '#c2185b' }
+              '&:hover': { backgroundColor: '#7b5cac' }
             }}
           >
             {saving ? 'Updating...' : 'Update Status'}

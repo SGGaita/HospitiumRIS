@@ -10,23 +10,14 @@ import {
   InputBase,
   Chip,
   Stack,
-  Avatar,
-  Badge,
-  Menu,
-  MenuItem,
   Tooltip,
   Breadcrumbs,
   Link,
   alpha,
-  useTheme,
-  Button,
-  Divider
+  useTheme
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  NotificationsOutlined as NotificationsIcon,
-  SettingsOutlined as SettingsIcon,
-  AccountCircle as AccountIcon,
   MenuOpen as MenuOpenIcon,
   Home as HomeIcon,
   Business as BusinessIcon,
@@ -50,25 +41,7 @@ const ProfessionalAnalyticsHeader = memo(({
   isLoading = false
 }) => {
   const theme = useTheme();
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [notificationAnchor, setNotificationAnchor] = useState(null);
   const [searchValue, setSearchValue] = useState('');
-
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleProfileMenuClose = () => {
-    setAnchorEl(null);
-  };
-
-  const handleNotificationClick = (event) => {
-    setNotificationAnchor(event.currentTarget);
-  };
-
-  const handleNotificationClose = () => {
-    setNotificationAnchor(null);
-  };
 
   const handleSearch = (event) => {
     if (event.key === 'Enter') {
@@ -96,30 +69,6 @@ const ProfessionalAnalyticsHeader = memo(({
       label: 'Analytics',
       icon: AnalyticsIcon,
       current: true
-    }
-  ];
-
-  const notifications = [
-    {
-      id: 1,
-      title: 'New Campaign Performance Report',
-      message: 'Q4 campaign exceeded target by 15%',
-      time: '2 hours ago',
-      type: 'success'
-    },
-    {
-      id: 2,
-      title: 'Low Donor Retention Alert',
-      message: 'Retention rate dropped to 18%',
-      time: '4 hours ago',
-      type: 'warning'
-    },
-    {
-      id: 3,
-      title: 'Monthly Report Ready',
-      message: 'December analytics report is available',
-      time: '1 day ago',
-      type: 'info'
     }
   ];
 
@@ -330,121 +279,8 @@ const ProfessionalAnalyticsHeader = memo(({
             </Tooltip>
           </Stack>
 
-          <Divider orientation="vertical" flexItem sx={{ 
-            borderColor: 'rgba(255,255,255,0.2)', 
-            mx: 1 
-          }} />
-
-          {/* Notifications */}
-          <Tooltip title="Notifications">
-            <IconButton
-              onClick={handleNotificationClick}
-              sx={{
-                color: 'white',
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
-              }}
-            >
-              <Badge badgeContent={notifications.length} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
-
-          {/* Settings */}
-          <Tooltip title="Settings">
-            <IconButton
-              sx={{
-                color: 'white',
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
-              }}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-
-          {/* Profile */}
-          <Tooltip title="Account">
-            <IconButton
-              onClick={handleProfileMenuOpen}
-              sx={{
-                color: 'white',
-                backgroundColor: 'rgba(255,255,255,0.1)',
-                '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
-              }}
-            >
-              <Avatar sx={{ width: 32, height: 32, fontSize: '0.9rem' }}>
-                FA
-              </Avatar>
-            </IconButton>
-          </Tooltip>
         </Stack>
 
-        {/* Profile Menu */}
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleProfileMenuClose}
-          PaperProps={{
-            sx: {
-              mt: 1.5,
-              minWidth: 200,
-              borderRadius: 2,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-            }
-          }}
-        >
-          <MenuItem onClick={handleProfileMenuClose}>
-            <AccountIcon sx={{ mr: 2 }} />
-            Profile
-          </MenuItem>
-          <MenuItem onClick={handleProfileMenuClose}>
-            <SettingsIcon sx={{ mr: 2 }} />
-            Settings
-          </MenuItem>
-          <Divider />
-          <MenuItem onClick={handleProfileMenuClose}>
-            Logout
-          </MenuItem>
-        </Menu>
-
-        {/* Notifications Menu */}
-        <Menu
-          anchorEl={notificationAnchor}
-          open={Boolean(notificationAnchor)}
-          onClose={handleNotificationClose}
-          PaperProps={{
-            sx: {
-              mt: 1.5,
-              minWidth: 350,
-              maxHeight: 400,
-              borderRadius: 2,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-            }
-          }}
-        >
-          <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              Notifications
-            </Typography>
-          </Box>
-          {notifications.map((notification) => (
-            <MenuItem key={notification.id} onClick={handleNotificationClose}>
-              <Box sx={{ width: '100%' }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  {notification.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                  {notification.message}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {notification.time}
-                </Typography>
-              </Box>
-            </MenuItem>
-          ))}
-        </Menu>
       </Toolbar>
     </AppBar>
   );
